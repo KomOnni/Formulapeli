@@ -23,8 +23,8 @@ class Pos(setX: Double, setY: Double, setRotation: Double = 0) {
       val circleCX = getX + cos(toRadians(rotation + sign * 90)) * steeringRadius
       val circleCY = getY + sin(toRadians(rotation + sign * 90)) * steeringRadius
       val angleBetweenGoalAndCurrent = speed / Constants.tickRate / (2 * math.Pi * steeringRadius) * 360
-      x = cos(toRadians(rotation)) * steeringRadius + circleCX
-      y = sin(toRadians(rotation)) * steeringRadius + circleCY
+      x = cos(toRadians(rotation - sign * 90) + toRadians(sign * angleBetweenGoalAndCurrent)) * steeringRadius + circleCX
+      y = sin(toRadians(rotation - sign * 90) + toRadians(sign * angleBetweenGoalAndCurrent)) * steeringRadius + circleCY
       rotate(sign * angleBetweenGoalAndCurrent)
     }
   }
