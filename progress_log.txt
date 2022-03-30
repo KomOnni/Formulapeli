@@ -2,3 +2,15 @@
 Auto(Formula)peli, omavalintainen aihe
 
 16.3 Olen ollut todella kiireinen joten en ole ehtinyt thedä, suunnitelmana tällä hetkellä olisi viikonloppuna saada luokkarakenne yms tehtyä.
+
+30.3 Olen lisännyt alustavan luokkarakenteen, jossa on lähes kaikki peliin tulevat luokat poislukine renkaat ja GUI.
+Metodeista on lähinnäkin tehty vasta Pos luokan add/drive metodi, josta saa auton uuden position, kun metodille antaa
+auton nopeuden, kääntymisen säteen ja suunnan. kääntymisen säteen saa kaavalla WB/tan(a) , jossa WB on wheelbase ja a ohjauskulma.
+
+Kyseisessä metodissa esiintyi aluksi virhe mutta sain sen korjattua. 
+
+Käytetty työmäärä on n. 5 tuntia
+
+Olen huomattavasti jäljessä, koska tällä hetkellä on todella paljon kouluhommia (24 noppaa samanaikaisesti) ja korona ei todellakaan 
+auttanut asiaa, kun en sen aikana olisi edes jaksanut tehdä pakollisia. Tämä periodi loppuu alle kahden viikon päästä 
+ja itselläni on tenttiviikolla vain yksi tentti, joten tarkoitus olisi silloin tehdä koko homma.
