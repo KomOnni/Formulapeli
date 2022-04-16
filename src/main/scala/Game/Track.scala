@@ -6,8 +6,8 @@ import scalafx.scene.image.{Image, ImageView}
 
 abstract class Track {
   val image: Node
-  val width: Int
-  val height: Int
+  val pixelsPerMeter: Double
+
 
   //Aloituspaikat
   val timeTrialStart: Pos
@@ -22,10 +22,9 @@ abstract class Track {
 }
 
 object TestTrack extends Track {
-  val image = new ImageView(new Image("/pics/testTrack2.png"))
-  val width = 5504
-  val height = 6032
+  val image = new ImageView(new Image("/pics/blackwoodPix3C3G.png"))
+  val pixelsPerMeter = 10
   val amountOfSectors = 0
-  val timeTrialStart: Pos = new Pos(100,100)
+  val timeTrialStart: Pos = new Pos(57.73648439916815, 812.592310281429, -16.874563631786398)
   val raceStart = Vector(new Pos(100,100))
 }

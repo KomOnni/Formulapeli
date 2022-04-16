@@ -30,7 +30,7 @@ sealed abstract class Car(val game: Game, val pos: Pos) {
     accerlation * Constants.Constants.mass
   }
 
-  def drag = pow(speed,1.5) * Constants.Constants.drag
+  def drag = pow(speed,1.7) * Constants.Constants.drag
 
   def brake(input: Double): Double = {
     Constants.Constants.brake * input
@@ -52,12 +52,14 @@ sealed abstract class Car(val game: Game, val pos: Pos) {
 
     val realTurn = if (noUndersteerThisTick) {
       turningCircle
+    } else if (steeringAngle == 0){
+      0
     } else {
       (pow(speed,2) / (maxTraction / Constants.Constants.mass)) * sign
     }
 
-
-    val availableTractionForSpeed = maxTraction - pow(speed,2) / abs(realTurn) * Constants.Constants.mass
+    val usedTractionInTurning = if (turningCircle != 0) pow(speed,2) / abs(realTurn) * Constants.Constants.mass else 0
+    val availableTractionForSpeed = maxTraction - usedTractionInTurning
     val totalF = totalForces(brakePedal, gasPedal)
 
     val realSpeedAdd = if (availableTractionForSpeed >= 0) {
@@ -92,8 +94,19 @@ sealed abstract class Car(val game: Game, val pos: Pos) {
 
 
 class PlayerCar(game: Game,pos: Pos) extends Car(game,pos) {
+
+  def mouseXtoSteeringInput: Double = {
+    val x = Controls.InputManager.mouseX
+    val sign = if (x - Constants.Constants.width / 2 < 0) -1 else 1
+    val absFromCenter = abs(x - Constants.Constants.width / 2)
+    val r = if (absFromCenter <= Constants.Constants.mouseDeadzone) 0 else {
+      (absFromCenter - Constants.Constants.mouseDeadzone) / (Constants.Constants.width / 2 - Constants.Constants.mouseDeadzone) * Constants.Constants.maxSteeringAngle * sign
+    }
+    r
+  }
+
   override def updateInputs: Unit = {
-    steeringInput = Controls.InputManager.mouseX * Constants.Constants.maxSteeringAngle * 2 / Constants.Constants.width - Constants.Constants.maxSteeringAngle
+    steeringInput = mouseXtoSteeringInput
     throttleInput = if (Controls.InputManager.keysPressed.contains(KeyCode.W)) 1 else 0
     brakeInput = if (Controls.InputManager.keysPressed.contains(KeyCode.S)) 1 else 0
   }
