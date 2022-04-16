@@ -1,17 +1,20 @@
 package Game
 
+import scalafx.scene.Node
 import scalafx.scene.image.{Image, ImageView}
 import scalafx.scene.input.KeyCode
+import scalafx.scene.paint.Color
 
+import scala.collection.mutable.Buffer
 import scala.math._
 
-sealed abstract class Car(val game: Game, val pos: Pos) {
+sealed abstract class Car(val game: Game, var pos: Pos) {
 
   //val picOfCar: Pic
   var speed: Double = 0
 
   // aikaan liittyvät
-  val sectortimes = Vector[Int]()
+  val sectortimes = Buffer[Long]()
   var invalidLap = false
 
   //inputs
@@ -19,9 +22,89 @@ sealed abstract class Car(val game: Game, val pos: Pos) {
   var throttleInput: Double = 0
   var brakeInput: Double = 0
 
-  def resetSpeed = speed = 0
+  //viime sijainnit
+  var twoSecsOfPos = Buffer[(Double, Double, Double)]()
 
   //apufunktiot
+
+  def savePos(pos: Pos) = {
+    twoSecsOfPos += ((pos.getX, pos.getY, pos.getR))
+    if (twoSecsOfPos.size > 2 * Constants.Constants.tickRate) twoSecsOfPos = twoSecsOfPos.tail
+  }
+
+  def resetSpeed = speed = 0
+
+  def gamePosToTrack(pos: Pos) = {
+    (pos.getX * game.track.pixelsPerMeter, pos.getY * game.track.pixelsPerMeter)
+  }
+
+  def tpIfGrass(i: Int) = {
+    if (i >= 3) {
+      val a = twoSecsOfPos.head
+      pos.changeTo(a._1,a._2,a._3)
+      resetSpeed
+    }
+  }
+  //Samalla tapahtuu sektorien ja ruohon tarkastus, palauttaa monta rengasta nurmella
+  def checkForGrassAndSectors(positions: Buffer[Pos]): Int = {
+    var count = 0
+    val f = positions.map(a => gamePosToTrack(a))
+    f.foreach(a => {
+      game.track.img.pixelReader match {
+        case None =>
+        case Some(pr) => {
+          val color = pr.getColor(a._1.round.toInt, a._2.round.toInt)
+          if (color.green - 0.2 > color.blue) {
+            count += 1
+//            println("" + a + ", " + f.indexOf(a))
+          } else if (color == game.track.sectorColors(sectortimes.size % game.track.amountOfSectors)) {
+            sectortimes += game.time
+            val print = game.track.sectorColors.indexOf(color) match {
+              case 0 => if (sectortimes.size > 1) {
+                val a = sectortimes.takeRight(4)
+                (a(3) - a(0)) / 100.0
+              } else "first lap"
+              case 1 => {
+                val a = sectortimes.takeRight(2)
+                (a(1) - a(0)) / 100.0
+              }
+              case 2 => {
+                val a = sectortimes.takeRight(3)
+                (a(2) - a(0)) / 100.0
+              }
+            }
+            println(print)
+          }
+//          println("" + color.green + ", " + color.red + ", " + color.blue)
+//          println(f.take(1))
+        }
+      }
+    })
+//    if (count != 0) println(count)
+ //   println(f)
+    count
+  }
+
+  def wheelPlaces(car: Car): Buffer[Pos] = {
+    val ret = Buffer[Pos]()
+    val wheelOffsetX = (51 - 28) / (145.0 / 5)
+    val FWOffsetY = (110 - 73) / (145.0 / 5)
+    val BWOffsetY = (73 - 23) / (145.0 / 5)
+
+    val p = game.player.pos
+
+    //Kulmat laskettu edellä olevian val:ien käytettyjen arvojen avulla
+    ret += new Pos(p.getX + FWOffsetY * cos(toRadians(p.getR + 31.86)), p.getY + wheelOffsetX * sin(toRadians(p.getR + 31.86)))
+    ret += new Pos(p.getX + FWOffsetY * cos(toRadians(p.getR - 31.86)), p.getY + wheelOffsetX * sin(toRadians(p.getR - 31.86)))
+    ret += new Pos(p.getX - BWOffsetY * cos(toRadians(p.getR + 24.7)), p.getY + wheelOffsetX * sin(toRadians(p.getR + 24.7)))
+    ret += new Pos(p.getX - BWOffsetY * cos(toRadians(p.getR - 24.7)), p.getY + wheelOffsetX * sin(toRadians(p.getR - 24.7)))
+
+//    println("" + ret(0).difference(pos) + " " + ret(1).difference(pos))
+//    println("" + ret(2).difference(pos) + " " + ret(3).difference(pos))
+
+    ret
+  }
+
   def downforce = pow(speed,2) * Constants.Constants.downforce
 
   def throttle(input: Double): Double = {
@@ -39,8 +122,8 @@ sealed abstract class Car(val game: Game, val pos: Pos) {
   def totalForces(brakePedal: Double, gasPedal: Double) = ( throttle(gasPedal) - drag - brake(brakePedal) )
 
   def maxTraction = (downforce + Constants.Constants.mass * 9.81) * Constants.Constants.tractionMultiplier
-// * Constants.Constants.understeer
-  //Ajamisen funktio, vasemmalle neg. steeringanle, yritetty tehdy aliohjauksen kanssa mutta en vielä onnistunu. Nyt päätin että teen aluksi muut valmiiksi ennen fysiikkamoottorin kanssa leikkimistä
+
+  //Ajamisen funktio, vasemmalle neg. steeringanle.
   def drive(steeringAngle: Double, brakePedal: Double, gasPedal: Double) = {
     val turningCircle = if (steeringAngle == 0) 0 else Constants.Constants.wheelBase/tan(toRadians(steeringAngle))
 
@@ -76,18 +159,14 @@ sealed abstract class Car(val game: Game, val pos: Pos) {
   def update() = {
     updateInputs
     drive(steeringInput, brakeInput, throttleInput)
+    draw
+    savePos(pos)
+    tpIfGrass(checkForGrassAndSectors(wheelPlaces(this)))
   }
 
   def updateInputs: Unit
 
-  def draw() = {
-    new ImageView(new Image("pics/Ferrari.png")) {
-      x = Constants.Constants.width / 2
-      y = Constants.Constants.height / 2
-      rotate = -90 + pos.getR
-
-    }
-  }
+  def draw: Node
 }
 
 
@@ -103,6 +182,15 @@ class PlayerCar(game: Game,pos: Pos) extends Car(game,pos) {
       (absFromCenter - Constants.Constants.mouseDeadzone) / (Constants.Constants.width / 2 - Constants.Constants.mouseDeadzone) * Constants.Constants.maxSteeringAngle * sign
     }
     r
+  }
+
+  def draw = {
+    val img = new Image("pics/Ferrari.png")
+    new ImageView(img) {
+      x = Constants.Constants.width / 2 - img.getWidth / 2
+      y = Constants.Constants.height / 2 - img.getHeight / 2
+      rotate = -90 + pos.getR
+    }
   }
 
   override def updateInputs: Unit = {

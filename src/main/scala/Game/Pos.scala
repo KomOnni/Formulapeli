@@ -14,6 +14,14 @@ class Pos(setX: Double, setY: Double, setRotation: Double = 0) {
 
   def rotate(angle: Double) = rotation = rotation + angle
 
+  def difference(other: Pos) = sqrt(pow(other.getX - this.getX,2) + pow(other.getY - this.getY,2))
+
+  def changeTo(nx: Double, ny: Double, nr: Double) = {
+    x = nx
+    y = ny
+    rotation = nr
+  }
+
   // Paikan muuttaminen steerin anglen avulla, vasemmalle annetaan neg.
   def add(steeringRadius: Double, speed: Double) = {
     if (steeringRadius == 0) {

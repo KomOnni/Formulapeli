@@ -1,11 +1,15 @@
 package Game
 
+import GUI.Ticker
+
 abstract class Game(val track: Track, val amountOfAI: Int, val playerStart: Int) {
 
   //rata ja aloituspaikat
   val startPositionsAndTaken:Vector[(Pos, Boolean)] = track.raceStart.take(amountOfAI + 1).map((_, false))
 
-
+  var time: Long = 0
+  val ticker = new Ticker(() => {time += 1})
+  ticker.start()
 
   //Autot
   val player: PlayerCar
