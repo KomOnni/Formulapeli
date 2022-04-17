@@ -3,7 +3,6 @@ package Game
 import scalafx.scene.Node
 import scalafx.scene.image.{Image, ImageView}
 import scalafx.scene.input.KeyCode
-import scalafx.scene.paint.Color
 
 import scala.collection.mutable.Buffer
 import scala.math._
@@ -16,6 +15,9 @@ sealed abstract class Car(val game: Game, var pos: Pos) {
   // aikaan liittyvät
   val sectortimes = Buffer[Long]()
   var invalidLap = false
+  var lastSector: Option[Double] = None
+  var lastLap: Option[Double] = None
+  var bestLap: Option[Double] = None
 
   //inputs
   var steeringInput: Double = 0
@@ -45,7 +47,8 @@ sealed abstract class Car(val game: Game, var pos: Pos) {
       resetSpeed
     }
   }
-  //Samalla tapahtuu sektorien ja ruohon tarkastus, palauttaa monta rengasta nurmella
+
+  //Samalla tapahtuu sektorien ja ruohon tarkastus, palauttaa monta rengasta nurmella, hoitaa sektorien päivityksen
   def checkForGrassAndSectors(positions: Buffer[Pos]): Int = {
     var count = 0
     val f = positions.map(a => gamePosToTrack(a))
@@ -61,27 +64,28 @@ sealed abstract class Car(val game: Game, var pos: Pos) {
             sectortimes += game.time
             val print = game.track.sectorColors.indexOf(color) match {
               case 0 => if (sectortimes.size > 1) {
-                val a = sectortimes.takeRight(4)
-                (a(3) - a(0)) / 100.0
-              } else "first lap"
+                val b = sectortimes.takeRight(4)
+                val lastLapVal = (b(3) - b(0)) / 100.0
+                lastLap = Some(lastLapVal)
+                if (bestLap.forall(a => a > lastLapVal)) bestLap = Some(lastLapVal)
+
+                val a = sectortimes.takeRight(2)
+                Some((a(1) - a(0)) / 100.0)
+              } else None
               case 1 => {
                 val a = sectortimes.takeRight(2)
-                (a(1) - a(0)) / 100.0
+                Some((a(1) - a(0)) / 100.0)
               }
               case 2 => {
-                val a = sectortimes.takeRight(3)
-                (a(2) - a(0)) / 100.0
+                val a = sectortimes.takeRight(2)
+                Some((a(1) - a(0)) / 100.0)
               }
             }
-            println(print)
+            lastSector = print
           }
-//          println("" + color.green + ", " + color.red + ", " + color.blue)
-//          println(f.take(1))
         }
       }
     })
-//    if (count != 0) println(count)
- //   println(f)
     count
   }
 
@@ -98,9 +102,6 @@ sealed abstract class Car(val game: Game, var pos: Pos) {
     ret += new Pos(p.getX + FWOffsetY * cos(toRadians(p.getR - 31.86)), p.getY + wheelOffsetX * sin(toRadians(p.getR - 31.86)))
     ret += new Pos(p.getX - BWOffsetY * cos(toRadians(p.getR + 24.7)), p.getY + wheelOffsetX * sin(toRadians(p.getR + 24.7)))
     ret += new Pos(p.getX - BWOffsetY * cos(toRadians(p.getR - 24.7)), p.getY + wheelOffsetX * sin(toRadians(p.getR - 24.7)))
-
-//    println("" + ret(0).difference(pos) + " " + ret(1).difference(pos))
-//    println("" + ret(2).difference(pos) + " " + ret(3).difference(pos))
 
     ret
   }
@@ -188,8 +189,8 @@ class PlayerCar(game: Game,pos: Pos) extends Car(game,pos) {
     val img = new Image("pics/Ferrari.png")
     new ImageView(img) {
       x = Constants.Constants.width / 2 - img.getWidth / 2
-      y = Constants.Constants.height / 2 - img.getHeight / 2
-      rotate = -90 + pos.getR
+      y = Constants.Constants.height * 2 / 3 - img.getHeight / 2
+      rotate = -180 //-90 + pos.getR
     }
   }
 

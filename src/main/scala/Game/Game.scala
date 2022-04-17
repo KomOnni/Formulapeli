@@ -25,7 +25,6 @@ abstract class Game(val track: Track, val amountOfAI: Int, val playerStart: Int)
   def pause() = ???
   def unpause() = ???
   def restart() = ???
-  def teleportPlayerToLastSector = ???
   */
 }
 
