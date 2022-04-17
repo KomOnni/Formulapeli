@@ -41,7 +41,7 @@ sealed abstract class Car(val game: Game, var pos: Pos) {
   }
 
   def tpIfGrass(i: Int) = {
-    if (i >= 3) {
+    if (i == 4) {
       val a = twoSecsOfPos.head
       pos.changeTo(a._1,a._2,a._3)
       resetSpeed
@@ -120,13 +120,13 @@ sealed abstract class Car(val game: Game, var pos: Pos) {
     Constants.Constants.brake * input
   }
 
-  def totalForces(brakePedal: Double, gasPedal: Double) = ( throttle(gasPedal) - drag - brake(brakePedal) )
+  def totalForces(brakePedal: Double, gasPedal: Double): Double = ( throttle(gasPedal) - drag - brake(brakePedal) )
 
   def maxTraction = (downforce + Constants.Constants.mass * 9.81) * Constants.Constants.tractionMultiplier
 
   //Ajamisen funktio, vasemmalle neg. steeringanle.
   def drive(steeringAngle: Double, brakePedal: Double, gasPedal: Double) = {
-    val turningCircle = if (steeringAngle == 0) 0 else Constants.Constants.wheelBase/tan(toRadians(steeringAngle))
+    val turningCircle = if (abs(steeringAngle) < 0.0001) 0 else Constants.Constants.wheelBase/tan(toRadians(steeringAngle))
 
     val sign = if (turningCircle < 0) -1 else 1
     val absturningCircle = abs(turningCircle)
@@ -146,7 +146,7 @@ sealed abstract class Car(val game: Game, var pos: Pos) {
     val availableTractionForSpeed = maxTraction - usedTractionInTurning
     val totalF = totalForces(brakePedal, gasPedal)
 
-    val realSpeedAdd = if (availableTractionForSpeed >= 0) {
+    val realSpeedAdd: Double = if (availableTractionForSpeed >= 0) {
       min(totalF, availableTractionForSpeed) / Constants.Constants.mass / Constants.Constants.tickRate
     } else {
       0

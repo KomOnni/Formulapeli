@@ -117,9 +117,9 @@ object GUI extends JFXApp {
 
     rotated.rotate = -90 - game.player.pos.getR
 
-    val imgCenter = (game.track.img.width.value / 2, game.track.img.height.value / 2)
+    val imgCenter = (game.track.img.width.value / 2.0, game.track.img.height.value / 2.0)
     val ogPoint = (game.player.pos.getX * game.track.pixelsPerMeter, game.player.pos.getY * game.track.pixelsPerMeter)
-    val ogPointDiff = (game.player.pos.getX * game.track.pixelsPerMeter - imgCenter._1, game.player.pos.getY * game.track.pixelsPerMeter - imgCenter._2)
+    val ogPointDiff = (ogPoint._1 - imgCenter._1, ogPoint._2 - imgCenter._2)
     val sign = if (ogPointDiff._1 < 0) 0 else 1
     val pointDiffDistance = sqrt(pow(ogPointDiff._1,2) + pow(ogPointDiff._2,2))
     val ogAngle = 180 * sign + toDegrees(atan(ogPointDiff._2/ogPointDiff._1))

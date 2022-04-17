@@ -3,8 +3,8 @@ package Constants
 object Constants {
   // Pelille
   val tickRate = 100
-  val width = 1600
-  val height = 1000
+  val width = 1920
+  val height = 1040
 
   //sivuboxille
 
@@ -12,7 +12,7 @@ object Constants {
   val sideHeight = height
 
   //Pelaajan input
-  val mouseDeadzone = 50
+  val mouseDeadzone = 20
 
   // Autolle
   val wheelBase: Double = 3.5

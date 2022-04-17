@@ -28,6 +28,6 @@ object Blackwood extends Track {
   val image = new ImageView(img)
   val pixelsPerMeter = 10
   val sectorColors = Vector(Color.rgb(255,255,255), Color.rgb(255,255,252), Color.rgb(255,255,250))
-  val timeTrialStart: Pos = new Pos(57.73648439916815, 822.592310281429, 0)//-16.874563631786398)
+  val timeTrialStart: Pos = new Pos(57.73648439916815, 822.592310281429, -16.874563631786398)
   val raceStart = Vector(new Pos(100,100))
 }
