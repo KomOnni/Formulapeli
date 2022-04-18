@@ -9,12 +9,15 @@ object InputManager {
 
   // Sets do not allow duplicates, so they are useful here
   val keysPressed = Set[KeyCode]()
+  val keyPressNow = Set[KeyCode]()
   var mouseX: Double = 0
 
   // Handle all
   def handleInput(scene: Scene) = {
+    keyPressNow.empty
     scene.onKeyPressed = (event) => {
       keysPressed += event.getCode
+      keyPressNow += event.getCode
     }
     scene.onKeyReleased = event => {
       keysPressed -= event.getCode

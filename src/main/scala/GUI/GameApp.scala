@@ -34,16 +34,13 @@ object GUI extends JFXApp {
     (-game.player.pos.getX * game.track.pixelsPerMeter, -game.player.pos.getY * game.track.pixelsPerMeter)
   }
 
-  val set = scala.collection.mutable.Set[String]()
-
   def update() = {
     game.player.update()
 
     //Voi saada paikat aloituspaikkoja ja AI:n reittiä varten
     def p = game.player.pos
-    if (Controls.InputManager.keysPressed.contains(KeyCode.Q)) {
-      set += s"(${p.getX}, ${p.getY}, ${p.getR})"
-      println(set.mkString(" "))
+    if (Controls.InputManager.keyPressNow.contains(KeyCode.Q)) {
+      println(s"(${p.getX}, ${p.getY}, ${p.getR})")
     }
 
     val rotated: Node = game.track.image

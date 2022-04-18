@@ -59,7 +59,6 @@ sealed abstract class Car(val game: Game, var pos: Pos) {
           val color = pr.getColor(a._1.round.toInt, a._2.round.toInt)
           if (color.green - 0.2 > color.blue) {
             count += 1
-//            println("" + a + ", " + f.indexOf(a))
           } else if (color == game.track.sectorColors(sectortimes.size % game.track.amountOfSectors)) {
             sectortimes += game.time
             val print = game.track.sectorColors.indexOf(color) match {
@@ -130,7 +129,7 @@ sealed abstract class Car(val game: Game, var pos: Pos) {
     val turningCircle = turningCircleFunction(steeringAngle)
     val sign = if (turningCircle < 0) -1 else 1
     val absturningCircle = abs(turningCircle)
-    val turningTraction = pow(speed, 2) / absturningCircle * Constants.Constants.mass
+    val turningTraction = if (absturningCircle != 0) pow(speed, 2) / absturningCircle * Constants.Constants.mass else 0
     val noUndersteerThisTick = turningTraction <= maxTraction
 
     if (noUndersteerThisTick) {
