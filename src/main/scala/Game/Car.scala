@@ -124,36 +124,47 @@ sealed abstract class Car(val game: Game, var pos: Pos) {
 
   def maxTraction = (downforce + Constants.Constants.mass * 9.81) * Constants.Constants.tractionMultiplier
 
-  //Ajamisen funktio, vasemmalle neg. steeringanle.
-  def drive(steeringAngle: Double, brakePedal: Double, gasPedal: Double) = {
-    val turningCircle = if (abs(steeringAngle) < 0.0001) 0 else Constants.Constants.wheelBase/tan(toRadians(steeringAngle))
+  def turningCircleFunction(steeringAngle: Double): Double = if (abs(steeringAngle) < 0.00001) 0 else Constants.Constants.wheelBase/tan(toRadians(steeringAngle))
 
+  def realTurn(steeringAngle: Double) = {
+    val turningCircle = turningCircleFunction(steeringAngle)
     val sign = if (turningCircle < 0) -1 else 1
     val absturningCircle = abs(turningCircle)
-
     val turningTraction = pow(speed, 2) / absturningCircle * Constants.Constants.mass
     val noUndersteerThisTick = turningTraction <= maxTraction
 
-    val realTurn = if (noUndersteerThisTick) {
+    if (noUndersteerThisTick) {
       turningCircle
-    } else if (steeringAngle == 0){
+    } else if (steeringAngle == 0) {
       0
     } else {
-      (pow(speed,2) / (maxTraction / Constants.Constants.mass)) * sign
+      //Bugin korjaamiseen max
+      max(absturningCircle,(pow(speed,2) / (maxTraction / Constants.Constants.mass))) * sign
     }
+  }
 
-    val usedTractionInTurning = if (turningCircle != 0) pow(speed,2) / abs(realTurn) * Constants.Constants.mass else 0
+
+  def usedTractionInTurning(steeringAngle: Double) = if (realTurn(steeringAngle) != 0) pow(speed,2) / abs(realTurn(steeringAngle)) * Constants.Constants.mass else 0
+
+  def addedSpeed(steeringAngle: Double, brakePedal: Double, gasPedal: Double) = {
+    if (maxTraction - usedTractionInTurning(steeringAngle) >= 0) {
+      min(totalForces(brakePedal, gasPedal), maxTraction - usedTractionInTurning(steeringAngle)) / Constants.Constants.mass / Constants.Constants.tickRate
+    } else {
+      0
+    }
+  }
+
+  //Ajamisen funktio, vasemmalle neg. steeringanle.
+  def drive(steeringAngle: Double, brakePedal: Double, gasPedal: Double) = {
+    val turningCircle: Double = turningCircleFunction(steeringAngle)
+    val usedTractionInTurning = if (turningCircle != 0) pow(speed,2) / abs(realTurn(steeringAngle)) * Constants.Constants.mass else 0
     val availableTractionForSpeed = maxTraction - usedTractionInTurning
     val totalF = totalForces(brakePedal, gasPedal)
 
-    val realSpeedAdd: Double = if (availableTractionForSpeed >= 0) {
-      min(totalF, availableTractionForSpeed) / Constants.Constants.mass / Constants.Constants.tickRate
-    } else {
-      0
-    }
+    val realSpeedAdd: Double = addedSpeed(steeringAngle, brakePedal, gasPedal)
 
     //Näin päin, koska tämä on lähempänä matkan integraalia nopeuden suhteen
-    pos.add(realTurn, speed)
+    pos.add(realTurn(steeringAngle), speed)
     speed = max(0, speed + realSpeedAdd)//totalForces(brakePedal, gasPedal) / Constants.Constants.mass / Constants.Constants.tickRate)
   }
 
@@ -167,7 +178,24 @@ sealed abstract class Car(val game: Game, var pos: Pos) {
 
   def updateInputs: Unit
 
-  def draw: Node
+  def draw = {
+    if (game.followedCar == this) {
+      val img = new Image("pics/Ferrari.png")
+      new ImageView(img) {
+        x = Constants.Constants.width / 2 - img.getWidth / 2
+        y = Constants.Constants.height * 2 / 3 - img.getHeight / 2
+        rotate = -180
+      }
+    } else {
+      val img = new Image("pics/Ferrari.png")
+      def diff = this.pos.differenceFromOtherXY(game.followedCar.pos)
+      new ImageView(img) {
+        x = Constants.Constants.width / 2 - img.getWidth / 2 + diff._1 * game.track.pixelsPerMeter
+        y = Constants.Constants.height * 2 / 3 - img.getHeight / 2 + diff._2 * game.track.pixelsPerMeter
+        rotate = -180 - diff._3
+      }
+    }
+  }
 }
 
 
@@ -185,18 +213,17 @@ class PlayerCar(game: Game,pos: Pos) extends Car(game,pos) {
     r
   }
 
-  def draw = {
-    val img = new Image("pics/Ferrari.png")
-    new ImageView(img) {
-      x = Constants.Constants.width / 2 - img.getWidth / 2
-      y = Constants.Constants.height * 2 / 3 - img.getHeight / 2
-      rotate = -180 //-90 + pos.getR
-    }
-  }
-
   override def updateInputs: Unit = {
     steeringInput = mouseXtoSteeringInput
     throttleInput = if (Controls.InputManager.keysPressed.contains(KeyCode.W)) 1 else 0
     brakeInput = if (Controls.InputManager.keysPressed.contains(KeyCode.S)) 1 else 0
   }
 }
+
+/*
+class AICar(game: Game, pos: Pos) extends Car(game,pos) {
+
+  var nextCheckpointIndex = 0
+  //var distanceFromCheckpoint = game.track.AI
+}
+ */

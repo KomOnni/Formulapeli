@@ -3,12 +3,13 @@ package GUI
 import scalafx.application.JFXApp
 import scalafx.scene.{Node, Scene}
 import Constants.Constants
-import Game.{Pos, TimeTrial}
+import Game.{Car, Pos, TimeTrial}
 import scalafx.scene.control.Label
 import scalafx.scene.input.KeyCode
 import scalafx.scene.paint.Color
 import scalafx.scene.paint.Color.{Black, DarkGray, DimGray, White}
 import scalafx.scene.shape.Rectangle
+
 import scala.math._
 
 
@@ -50,7 +51,7 @@ object GUI extends JFXApp {
 
     val info = Rectangle(50,200,200,Constants.height - 2 * 200)
     info.fill = DimGray
-    info.opacity = 0.75
+    info.opacity = 1
 
     //Informaatiolle labelit yms.
 
@@ -113,22 +114,25 @@ object GUI extends JFXApp {
       fill = Color.Red
     }
 
-    //Seuraavien funktioiden avulla voi seurata autoa sen perspektiivistä.
+    //Seuraavan funktion avulla voi seurata autoa sen perspektiivistä.
 
-    rotated.rotate = -90 - game.player.pos.getR
+    def followCar(car: Car) = {
+      rotated.rotate = -90 - car.pos.getR
 
-    val imgCenter = (game.track.img.width.value / 2.0, game.track.img.height.value / 2.0)
-    val ogPoint = (game.player.pos.getX * game.track.pixelsPerMeter, game.player.pos.getY * game.track.pixelsPerMeter)
-    val ogPointDiff = (ogPoint._1 - imgCenter._1, ogPoint._2 - imgCenter._2)
-    val sign = if (ogPointDiff._1 < 0) 0 else 1
-    val pointDiffDistance = sqrt(pow(ogPointDiff._1,2) + pow(ogPointDiff._2,2))
-    val ogAngle = 180 * sign + toDegrees(atan(ogPointDiff._2/ogPointDiff._1))
-    val newAngle = ogAngle - 90 - game.player.pos.getR
-    val newPoint = (imgCenter._1 - cos(toRadians(newAngle)) * pointDiffDistance, imgCenter._2 - sin(toRadians(newAngle)) * pointDiffDistance)
+      val imgCenter = (game.track.img.width.value / 2.0, game.track.img.height.value / 2.0)
+      val ogPoint = (car.pos.getX * game.track.pixelsPerMeter, car.pos.getY * game.track.pixelsPerMeter)
+      val ogPointDiff = (ogPoint._1 - imgCenter._1, ogPoint._2 - imgCenter._2)
+      val sign = if (ogPointDiff._1 < 0) 0 else 1
+      val pointDiffDistance = sqrt(pow(ogPointDiff._1,2) + pow(ogPointDiff._2,2))
+      val ogAngle = 180 * sign + toDegrees(atan(ogPointDiff._2/ogPointDiff._1))
+      val newAngle = ogAngle - 90 - car.pos.getR
+      val newPoint = (imgCenter._1 - cos(toRadians(newAngle)) * pointDiffDistance, imgCenter._2 - sin(toRadians(newAngle)) * pointDiffDistance)
 
-    rotated.translateX = -newPoint._1 + Constants.width/2
-    rotated.translateY = -newPoint._2 + Constants.height * 2 / 3
+      rotated.translateX = -newPoint._1 + Constants.width / 2
+      rotated.translateY = -newPoint._2 + Constants.height * 2 / 3
+    }
 
+    followCar(game.player)
 
     //Scaalaa (hehe) auton
 
