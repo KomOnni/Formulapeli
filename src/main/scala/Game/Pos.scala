@@ -18,6 +18,17 @@ class Pos(setX: Double, setY: Double, setRotation: Double = 0) {
 
   def differenceFromOtherXY(other: Pos) = (this.getX - other.getX, this.getY - other.getY, this.getR - other.getR)
 
+  def angleBetween(other: Pos) = {
+    val diff = other.differenceFromOtherXY(this)
+    val m = if (diff._1 < 0) 1 else 0
+    toDegrees(atan(-diff._2/diff._1)) + 180 * m + this.getR
+  }
+
+  def isBehind(behind: Pos): Boolean = {
+    val a = abs(this.angleBetween(behind)) % 360
+    !(a < 90 || a > 270)
+  }
+
   def changeTo(nx: Double, ny: Double, nr: Double) = {
     x = nx
     y = ny

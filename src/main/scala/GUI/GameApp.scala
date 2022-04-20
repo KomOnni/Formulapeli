@@ -3,20 +3,23 @@ package GUI
 import scalafx.application.JFXApp
 import scalafx.scene.{Node, Scene}
 import Constants.Constants
-import Game.{Car, Pos, TimeTrial}
+import Controls.InputManager
+import Game._
 import scalafx.scene.control.Label
 import scalafx.scene.input.KeyCode
 import scalafx.scene.paint.Color
 import scalafx.scene.paint.Color.{Black, DarkGray, DimGray, White}
 import scalafx.scene.shape.Rectangle
 
+import scala.collection.mutable.Buffer
 import scala.math._
 
 
 // Starting point for our ScalaFX application.
 object GUI extends JFXApp {
 
-  val game = new TimeTrial(Game.Blackwood)
+  val game = new AITest(Game.Blackwood)
+//  val game = new TimeTrial(Game.Blackwood)
 
   // Objects drawn in window are children of this Scene
   val root = new Scene
@@ -30,21 +33,18 @@ object GUI extends JFXApp {
     scene = root
   }
 
-  def gamePosToTrack(pos: Pos) = {
-    (-game.player.pos.getX * game.track.pixelsPerMeter, -game.player.pos.getY * game.track.pixelsPerMeter)
-  }
-
   def update() = {
-    game.player.update()
+    game.cars.foreach(_.update())
 
     //Voi saada paikat aloituspaikkoja ja AI:n reittiä varten
-    def p = game.player.pos
+    def p = game.cars.head.pos
     if (Controls.InputManager.keyPressNow.contains(KeyCode.Q)) {
       println(s"(${p.getX}, ${p.getY}, ${p.getR})")
     }
+    InputManager.keyPressNow = scala.collection.mutable.Set[KeyCode]()
 
     val rotated: Node = game.track.image
-    val car: Node = game.player.draw
+    val cars = game.cars.map(_.draw)
 
     val info = Rectangle(50,200,200,Constants.height - 2 * 200)
     info.fill = DimGray
@@ -57,7 +57,7 @@ object GUI extends JFXApp {
       200 + 50 * i)
     }
 
-    val l1 = new Label(s"${(game.player.speed * 3.6).toInt} km/h") {
+    val l1 = new Label(s"${(game.followedCar.speed * 3.6).toInt} km/h") {
       val pos = infoLabelPos(1)
       translateX = pos._1 + 25
       translateY = pos._2
@@ -66,7 +66,7 @@ object GUI extends JFXApp {
       scaleY = 4
     }
 
-    val l2 = new Label(s"Last sector: ${game.player.lastSector.getOrElse("None")}") {
+    val l2 = new Label(s"Last sector: ${game.followedCar.lastSector.getOrElse("None")}") {
       val pos = infoLabelPos(2)
       translateX = pos._1
       translateY = pos._2
@@ -75,7 +75,7 @@ object GUI extends JFXApp {
       scaleY = 2
     }
 
-    val l3 = new Label(s"Last lap: ${game.player.lastLap.getOrElse("None")}") {
+    val l3 = new Label(s"Last lap: ${game.followedCar.lastLap.getOrElse("None")}") {
       val pos = infoLabelPos(3)
       translateX = pos._1
       translateY = pos._2
@@ -84,7 +84,7 @@ object GUI extends JFXApp {
       scaleY = 2
     }
 
-    val l4 = new Label(s"Best lap: ${game.player.bestLap.getOrElse("None")}") {
+    val l4 = new Label(s"Best lap: ${game.followedCar.bestLap.getOrElse("None")}") {
       val pos = infoLabelPos(4)
       translateX = pos._1
       translateY = pos._2
@@ -104,12 +104,14 @@ object GUI extends JFXApp {
     }
 
     val steeringRed = new Rectangle {
-      x = Constants.width / 2 - 300 + (game.player.steeringInput + Constants.maxSteeringAngle) * steeringWhite.width.value / 2 / Constants.maxSteeringAngle
+      x = Constants.width / 2 - 300 + (game.followedCar.steeringInput + Constants.maxSteeringAngle) * steeringWhite.width.value / 2 / Constants.maxSteeringAngle
       y = steeringWhite.y.value
       width = steeringWhite.height.value
       height = steeringWhite.height.value
       fill = Color.Red
     }
+
+    val AInext = game.cars.flatMap(car => car.drawAIRoute.getOrElse(Buffer[Node]()))
 
     //Seuraavan funktion avulla voi seurata autoa sen perspektiivistä.
 
@@ -129,15 +131,18 @@ object GUI extends JFXApp {
       rotated.translateY = -newPoint._2 + Constants.height * 2 / 3
     }
 
-    followCar(game.player)
+    followCar(game.followedCar)
 
     //Scaalaa (hehe) auton
-
     val carScale: Double = game.track.pixelsPerMeter / (145.0 / 5)
-    car.scaleX = carScale
-    car.scaleY = carScale
 
-    root.content = Array(rotated, car, steeringWhite, steeringRed, info, l1, l2, l3, l4)
+    cars.foreach(car => {
+      car.scaleX = carScale
+      car.scaleY = carScale
+    })
+
+    val content = Array(rotated) ++ cars.toArray ++ AInext.toArray ++ Array(steeringWhite, steeringRed, info, l1, l2, l3, l4)
+    root.content = content
 
   }
 
