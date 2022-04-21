@@ -1,4 +1,4 @@
-package GUI
+package Game
 
 import javafx.animation.AnimationTimer
 
@@ -12,5 +12,4 @@ class Ticker(function: () => Unit) extends AnimationTimer {
             lastUpdate = now
         }
     }
-
 }

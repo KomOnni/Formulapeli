@@ -24,6 +24,12 @@ class Pos(setX: Double, setY: Double, setRotation: Double = 0) {
     toDegrees(atan(-diff._2/diff._1)) + 180 * m + this.getR
   }
 
+  def realAngleBetween(other: Pos) = {
+    val diff = other.differenceFromOtherXY(this)
+    val m = if (diff._2 < 0) 1 else 0
+    toDegrees(atan(diff._1/diff._2)) + 180 * m + this.getR
+  }
+
   def isBehind(behind: Pos): Boolean = {
     val a = abs(this.angleBetween(behind)) % 360
     !(a < 90 || a > 270)

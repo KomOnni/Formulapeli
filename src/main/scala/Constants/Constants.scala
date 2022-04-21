@@ -6,10 +6,11 @@ object Constants {
   val width = 1920
   val height = 1040
 
-  //sivuboxille
+  //AI:n alt
+  val altDefault = 3
 
-  val sideWidth = 300
-  val sideHeight = height
+  //Muuten GUI:lle
+  val zoomScale = 1 //1.8
 
   //Pelaajan input
   val mouseDeadzone = 20

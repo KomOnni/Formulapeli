@@ -42,10 +42,17 @@ abstract class Car(val game: Game, var pos: Pos) {
   }
 
   def tpIfGrass(i: Int) = {
-    if (i == 4) {
+    if (i == 5) {
       val a = twoSecsOfPos.head
       pos.changeTo(a._1,a._2,a._3)
       resetSpeed()
+      this match {
+        case (aiCar: AICar) => {
+          aiCar.routeCalculated = false
+          aiCar.nextCheckpointIndex = max(0, aiCar.nextCheckpointIndex - 1)
+          aiCar.miniCheckpointIndex = 0
+        }
+      }
     }
   }
 
@@ -86,7 +93,7 @@ abstract class Car(val game: Game, var pos: Pos) {
         }
       }
     })
-    0 //count
+    count
   }
 
   def wheelPlaces(car: Car): Buffer[Pos] = {
@@ -183,11 +190,15 @@ abstract class Car(val game: Game, var pos: Pos) {
       }
     } else {
       val img = new Image("pics/Ferrari.png")
-      def diff = this.pos.differenceFromOtherXY(game.followedCar.pos)
+      val d = game.followedCar.pos.realAngleBetween(pos)
+      val c = pos.differenceFromOtherXY(game.followedCar.pos)
+      val b = pos.difference(game.followedCar.pos)
+      println(d)
+//      println(-sin(toRadians(d)) * b * game.followedScale * game.track.pixelsPerMeter)
       new ImageView(img) {
-        x = Constants.width / 2 - img.getWidth / 2 + diff._1 * game.track.pixelsPerMeter
-        y = Constants.height * 2 / 3 - img.getHeight / 2 + diff._2 * game.track.pixelsPerMeter
-        rotate = -180 - diff._3
+        x = Constants.width / 2 + cos(toRadians(d)) * b * game.track.pixelsPerMeter * game.followedScale - img.getWidth / 2
+        y = Constants.height / 3 * 2 - sin(toRadians(d)) * b * game.track.pixelsPerMeter * game.followedScale - img.getHeight / 2
+        rotate = -180 + c._3
       }
     }
   }
@@ -219,7 +230,6 @@ class PlayerCar(game: Game,pos: Pos) extends Car(game,pos) {
   def update() = {
     updateInputs()
     drive(steeringInput, brakeInput, throttleInput)
-    draw
     savePos(pos)
     tpIfGrass(checkForGrassAndSectors(wheelPlaces(this)))
   }
