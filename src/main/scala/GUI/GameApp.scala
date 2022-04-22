@@ -36,7 +36,6 @@ object GUI extends JFXApp {
 
   //Päivitä metodi
   def update() = {
-    game.cars.foreach(_.update())
 
     //Voi saada paikat aloituspaikkoja ja AI:n reittiä varten
     def p = game.cars.head.pos
@@ -51,10 +50,8 @@ object GUI extends JFXApp {
     if (Controls.InputManager.keyPressNow.contains(KeyCode.P)) {
       if (game.pause) {
         game.ticker.start()
-        ticker.start()
       } else {
         game.ticker.stop()
-        ticker.stop()
       }
       game.pause = !game.pause
     }

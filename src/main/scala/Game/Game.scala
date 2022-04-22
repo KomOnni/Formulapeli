@@ -1,7 +1,6 @@
 package Game
 
 import scala.collection.mutable.Buffer
-import scala.math.pow
 import Constants.Constants
 
 abstract class Game(val track: Track, val amountOfAI: Int, val playerStart: Int) {
@@ -11,7 +10,10 @@ abstract class Game(val track: Track, val amountOfAI: Int, val playerStart: Int)
 
   var time: Long = 0
 
-  val ticker = new Ticker(() => {time += 1})
+  val ticker = new Ticker(() => {
+    time += 1
+    cars.foreach(_.update())
+  })
   var pause = false
   ticker.start()
 
@@ -48,11 +50,17 @@ class TimeTrial(track: Track) extends Game(track, 0, 1) {
 //class Race(track: Game.Track, amountOfAI: Int, playerStart: Int, val amountOfLaps: Int) extends Game.Game(track, amountOfAI, playerStart) {}
 
 class AITest(track: Track) extends Game(track, 1, -1) {
-  val AICar = new AICar(this, startPositionsAndTaken.head)
+  val AICar = new AICar(this, startPositionsAndTaken.head,3)
   cars += AICar
 }
 
 class AIRaceTest(track: Track) extends Game(track, 1, -1) {
-  cars += new AICar(this, startPositionsAndTaken(2))
-  cars += new AICar(this, startPositionsAndTaken(3))
+  cars += new AICar(this, startPositionsAndTaken(2),1)
+  cars += new AICar(this, startPositionsAndTaken(3),3)
+}
+
+class Race(track: Track) extends Game(track, 1, -1) {
+  cars += new PlayerCar(this, startPositionsAndTaken(3))
+  cars += new AICar(this, startPositionsAndTaken(2), 3)
+
 }

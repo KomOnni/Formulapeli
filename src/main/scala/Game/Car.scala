@@ -8,7 +8,7 @@ import scalafx.scene.Node
 import scala.collection.mutable.Buffer
 import scala.math._
 
-abstract class Car(val game: Game, var pos: Pos) {
+abstract class Car(val game: Game, var pos: Pos, val livery: Int) {
 
   //val picOfCar: Pic
   var speed: Double = 0
@@ -42,8 +42,8 @@ abstract class Car(val game: Game, var pos: Pos) {
   }
 
   def tpIfGrass(i: Int) = {
-    if (i == 5) {
-      val a = twoSecsOfPos.head
+    if (i == 4) {
+      val a = if (twoSecsOfPos.size > 100) twoSecsOfPos(100) else twoSecsOfPos.head
       pos.changeTo(a._1,a._2,a._3)
       resetSpeed()
       this match {
@@ -121,7 +121,14 @@ abstract class Car(val game: Game, var pos: Pos) {
     accerlation * Constants.mass
   }
 
-  def drag = pow(speed,1.7) * Constants.drag
+  def slipstremMultiplier: Double = {
+    if (game.cars.size >= 2) {
+      val collection = game.cars.filterNot(_ == this).flatMap(_.twoSecsOfPos.map(a => new Pos(a._1,a._2).difference(pos)))
+      if (collection.nonEmpty && collection.min < 2) Constants.slipstream else 1
+    } else 1
+  }
+
+  def drag = pow(speed,1.7) * Constants.drag * slipstremMultiplier
 
   def brake(input: Double): Double = {
     Constants.brake * input
@@ -176,25 +183,27 @@ abstract class Car(val game: Game, var pos: Pos) {
     speed = max(0, speed + realSpeedAdd)//totalForces(brakePedal, gasPedal) / Constants.Constants.mass / Constants.Constants.tickRate)
   }
 
+  val img = livery match {
+    case 1 => new Image("/pics/Ferrari.png")
+    case 2 => new Image("/pics/Mercedes.png")
+    case 3 => new Image("/pics/RedBull.png")
+  }
+
   def update(): Unit
 
   def updateInputs(): Unit
 
   def draw = {
     if (game.followedCar == this) {
-      val img = new Image("pics/Ferrari.png")
       new ImageView(img) {
         x = Constants.width / 2 - img.getWidth / 2
         y = Constants.height * 2 / 3 - img.getHeight / 2
         rotate = -180
       }
     } else {
-      val img = new Image("pics/Ferrari.png")
       val d = game.followedCar.pos.realAngleBetween(pos)
       val c = pos.differenceFromOtherXY(game.followedCar.pos)
       val b = pos.difference(game.followedCar.pos)
-      println(d)
-//      println(-sin(toRadians(d)) * b * game.followedScale * game.track.pixelsPerMeter)
       new ImageView(img) {
         x = Constants.width / 2 + cos(toRadians(d)) * b * game.track.pixelsPerMeter * game.followedScale - img.getWidth / 2
         y = Constants.height / 3 * 2 - sin(toRadians(d)) * b * game.track.pixelsPerMeter * game.followedScale - img.getHeight / 2
@@ -207,7 +216,7 @@ abstract class Car(val game: Game, var pos: Pos) {
 
 
 
-class PlayerCar(game: Game,pos: Pos) extends Car(game,pos) {
+class PlayerCar(game: Game,pos: Pos) extends Car(game,pos,1) {
 
   def drawAIRoute = None
 

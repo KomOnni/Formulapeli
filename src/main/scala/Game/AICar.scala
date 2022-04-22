@@ -7,7 +7,7 @@ import scalafx.scene.shape.Rectangle
 import scala.collection.mutable.Buffer
 import scala.math._
 
-class AICar(game: Game, pos: Pos) extends Car(game,pos) {
+class AICar(game: Game, pos: Pos, livery: Int) extends Car(game,pos,livery) {
 
   var nextCheckpointIndex: Int = 0
 
@@ -154,21 +154,42 @@ class AICar(game: Game, pos: Pos) extends Car(game,pos) {
   }
 
   def checkForOthers() = {
-    def newPosOnSide(d: Double) = new Pos(pos.getX + cos(toRadians(-pos.getR)) * d, pos.getY + sin(toRadians(-pos.getR)) * d)
-    def newPosHeading(d: Double) = new Pos(pos.getX + cos(toRadians(-pos.getR)) * d, pos.getY + sin(toRadians(-pos.getR)) * d)
+    def newPosOnSide(d: Double) = new Pos(pos.getX + cos(toRadians(pos.getR + 90)) * d, pos.getY + sin(toRadians(pos.getR + 90)) * d)
+    def newPosHeading(d: Double) = new Pos(pos.getX + cos(toRadians(pos.getR)) * d, pos.getY + sin(toRadians(pos.getR)) * d)
     val otherPlayers = game.cars.filterNot(_ == this)
     if (otherPlayers.nonEmpty) {
-      val least = (Vector(-3,-2,-1,1,2,3).map(a => newPosOnSide(a)) ++ Vector(-3,3).map(a => newPosHeading(a))).map(a => otherPlayers.map(_.pos.difference(a)).min).zipWithIndex.minBy(_._1)
-      if (this == game.cars.head) println (least._2)
-      if (least._1 < 5) {
+      val least = (Vector(-3,-2,-1,1,2,3).map(a => newPosOnSide(a)) ++ Vector(-3,5).map(a => newPosHeading(a))).map(a => otherPlayers.map(_.pos.difference(a)).min).zipWithIndex.minBy(_._1)
+      if (least._1 < 3.5 && miniCheckpoints.nonEmpty) {
         val altSide = game.track.routeAndAlt(nextCheckpointIndex)._3
-        if (least._2 <= 2 && !altSide) {
-          if (!alt) calculateMiniCheckpoints()
-          alt = true
+        if (least._2 <= 2 && altSide) {
+        val altvalue = alt
+          if (altSide) {
+            alt = true
+            if (!altvalue) routeCalculated = false
+          } else {
+            alt = false
+            if (altvalue) routeCalculated = false
+          }
         }
-        else if (least._2 >= 3 && least._2 <=5 && altSide) {
-          if (!alt) calculateMiniCheckpoints()
+        else if (least._2 >= 3 && least._2 <=5) {
+          val altvalue = alt
+          if (!altSide) {
+            alt = true
+            if (!altvalue) routeCalculated = false
+          } else {
+            alt = false
+            if (altvalue) routeCalculated = false
+          }
+        }
+        else if (least._2 == 6) {
+          val altvalue = alt
+          alt = false
+          if (altvalue && miniCheckpoints(miniCheckpointIndex)._2 == 1) routeCalculated = false
+        }
+        else if (least._2 == 7) {
+          val altvalue = alt
           alt = true
+          if (!altvalue && miniCheckpoints(miniCheckpointIndex)._2 == 1) routeCalculated = false
         }
       }
     }
@@ -179,7 +200,7 @@ class AICar(game: Game, pos: Pos) extends Car(game,pos) {
       case 1 => {
         val steeringAngle = 0.3
         val nextMiniPos = miniCheckpoints(miniCheckpointIndex)._1
-        val angle = abs(pos.angleBetween(nextMiniPos)) % 360
+        val angle = abs(pos.angleBetween(nextMiniPos))
         val steeringInput = if (angle > 270 && angle < 359.93) steeringAngle else if (angle < 90 && angle > 0.07) -steeringAngle else 0
         (steeringInput,0,1)
       }
@@ -216,12 +237,11 @@ class AICar(game: Game, pos: Pos) extends Car(game,pos) {
   def update() = {
     checkCheckpoint()
     checkForOthers()
-    alt = scala.util.Random.nextBoolean()
     calculateMiniCheckpoints()
     recalculateBrakePoint()
     updateInputs()
     drive(steeringInput, brakeInput, throttleInput)
     savePos(pos)
-    tpIfGrass(checkForGrassAndSectors(wheelPlaces(this)))
+    checkForGrassAndSectors(wheelPlaces(this))
   }
 }

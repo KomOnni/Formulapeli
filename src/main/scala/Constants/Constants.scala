@@ -10,14 +10,14 @@ object Constants {
   val altDefault = 3
 
   //Muuten GUI:lle
-  val zoomScale = 1 //1.8
+  val zoomScale = 1.8
 
   //Pelaajan input
   val mouseDeadzone = 20
 
   // Autolle
   val wheelBase: Double = 3.5
-
+  val slipstream: Double = 0.9
   val downforce: Double = 2.5
   val motor: Double = 400000 //W
   val drag: Double = 3.5
