@@ -205,13 +205,7 @@ abstract class Car(val game: Game, var pos: Pos, val livery: Int) {
 
   //Ajamisen funktio, vasemmalle neg. steeringanle.
   def drive(steeringAngle: Double, brakePedal: Double, gasPedal: Double) = {
-    val turningCircle: Double = turningCircleFunction(steeringAngle)
-    val usedTractionInTurning = if (turningCircle != 0) pow(speed,2) / abs(realTurn(steeringAngle)) * Constants.mass else 0
-    val availableTractionForSpeed = maxTraction - usedTractionInTurning
-    val totalF = totalForces(brakePedal, gasPedal)
-
     val realSpeedAdd: Double = addedSpeed(steeringAngle, brakePedal, gasPedal)
-
     //Näin päin, koska tämä on lähempänä matkan integraalia nopeuden suhteen
     pos.add(realTurn(steeringAngle), speed)
     speed = max(0, speed + realSpeedAdd)//totalForces(brakePedal, gasPedal) / Constants.Constants.mass / Constants.Constants.tickRate)
