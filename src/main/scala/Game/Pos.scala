@@ -3,7 +3,8 @@ package Game
 import scala.math._
 
 class Pos(setX: Double, setY: Double, setRotation: Double = 0) {
-  //paikat privatena, yksiköt merejä (fysiikan vuoksi määritelty)
+
+  //paikat privatena, yksiköt metrejä (fysiikan vuoksi määritelty)
   private var x: Double = setX
   private var y: Double = setY
   private var rotation: Double = setRotation
@@ -12,29 +13,36 @@ class Pos(setX: Double, setY: Double, setRotation: Double = 0) {
   def getY = y
   def getR = rotation
 
+  //kääntäää
   def rotate(angle: Double) = rotation = rotation + angle
 
+  //Pos:ien välinen etäisyys
   def difference(other: Pos) = sqrt(pow(other.getX - this.getX,2) + pow(other.getY - this.getY,2))
 
+ //Positioneiden ero
   def differenceFromOtherXY(other: Pos) = (this.getX - other.getX, this.getY - other.getY, this.getR - other.getR)
 
+  //Logiikka on väärä, mutta toimii oikein jossain, joten jää
   def angleBetween(other: Pos) = {
     val diff = other.differenceFromOtherXY(this)
     val m = if (diff._1 < 0) 1 else 0
     toDegrees(atan(-diff._2/diff._1)) + 180 * m + this.getR
   }
 
+  //Oikeasti toimiva funktio
   def realAngleBetween(other: Pos) = {
     val diff = other.differenceFromOtherXY(this)
     val m = if (diff._2 < 0) 1 else 0
     toDegrees(atan(diff._1/diff._2)) + 180 * m + this.getR
   }
 
+  //Tarkistaa onko joku muu (behind) tämän takana
   def isBehind(behind: Pos): Boolean = {
     val a = abs(this.angleBetween(behind)) % 360
     !(a < 90 || a > 270)
   }
 
+  //Vaihtaa position johonkin muuhun
   def changeTo(nx: Double, ny: Double, nr: Double) = {
     x = nx
     y = ny

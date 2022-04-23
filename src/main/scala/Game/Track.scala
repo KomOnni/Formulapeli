@@ -6,8 +6,10 @@ import scalafx.scene.paint.Color
 
 
 abstract class Track {
+
   val img: Image
   val image: Node
+  //Suhteuttaa kuvan pelin pos systeemiin
   val pixelsPerMeter: Double
 
 
@@ -19,7 +21,7 @@ abstract class Track {
   val amountOfSectors = 3
   val sectorColors: Vector[Color]
 
-  //AI
+  //AI checkpointit, positio, tyyppi, väistää oikealle, paljon väistää (kerroin))
   val routeAndAlt: Vector[(Pos, Int, Boolean, Double)]
 }
 
@@ -41,7 +43,7 @@ object Blackwood extends Track {
     //Shikaani
     (new Pos(464.0784371955626, 146.80923130896076, 111.87412649301223), 2, false, 1),
     (new Pos(454.26690834075333, 187.2151246219126, -271.265933768716 + 360), 1, true, 0.8),
-    (new Pos(468.3976640351184, 229.96108381817308, -299.01964360102835 + 360), 2, false, 1),
+    (new Pos(468.3976640351184, 229.96108381817308, -309.01964360102835 + 360), 2, false, 1),
     (new Pos(485.95587557307044, 314.6401853038484, -270.00781580636897 + 360), 2, true, 1),
     //takasuora
     (new Pos(486.87505734606776, 477.35676175225984, 89.2035818316454), 3, true, 1),
@@ -56,13 +58,11 @@ object Blackwood extends Track {
     (new Pos(228.93360820951875, 1229.492508861636, 295.12598382157006), 2, true, 1),
     //turn 7
     (new Pos(225.13936057638557, 1129.24157964566, 245.42902365545845), 2, false, 1),
-//    (new Pos(219.30289049050145, 1116.1933364462534, -473.2391588387115 + 360 + 360), 2, false, 1),
     // turn 8
     (new Pos(75.50571277405993, 942.9411621878821, 223.51632149403676), 2, true, 1),
     //turn 9
     (new Pos(32.57007567054109, 854.8029548796192, -787.978142547892 + 360 + 360 + 360), 1, false, 1),
     (new Pos(98.08073337662972, 799.1428552784843, -740.3439495246964 + 360 + 360 + 360), 2, true, 1),
-//    (new Pos(152.9819937192062, 782.2093761477523, -27.514853800938862), 3, true, 1),
     //turn 10
     (new Pos(221.09315669492875, 720.5419275909805, -80.68078502629342 + 360), 1, true, 1),
     (new Pos(212.69789218503365, 653.8371756608983, -1189.2044917572948 + 360 + 360 + 360 + 360), 2, false, 1),

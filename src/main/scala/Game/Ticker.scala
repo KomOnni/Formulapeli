@@ -9,6 +9,7 @@ class Ticker(function: () => Unit) extends AnimationTimer {
     override def handle(now: Long): Unit = {
         if (now - lastUpdate >= 10_000_000) {
             function()
+//            println((now - lastUpdate))
             lastUpdate = now
         }
     }

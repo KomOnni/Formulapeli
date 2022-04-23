@@ -10,12 +10,14 @@ import scala.math._
 
 abstract class Car(val game: Game, var pos: Pos, val livery: Int) {
 
-  //val picOfCar: Pic
+  //nopeus
   var speed: Double = 0
+
+  //slipstream boolean
+  var slipstreamBoolean = false
 
   // aikaan liittyvät
   val sectortimes = Buffer[Long]()
-  var invalidLap = false
   var lastSector: Option[Double] = None
   var lastLap: Option[Double] = None
   var bestLap: Option[Double] = None
@@ -31,32 +33,30 @@ abstract class Car(val game: Game, var pos: Pos, val livery: Int) {
   //apufunktiot
 
   def savePos(pos: Pos) = {
-    twoSecsOfPos += ((pos.getX, pos.getY, pos.getR))
-    if (twoSecsOfPos.size > 2 * Constants.tickRate) twoSecsOfPos = twoSecsOfPos.tail
+    if (game.time % 5 == 0) {
+      twoSecsOfPos += ((pos.getX, pos.getY, pos.getR))
+      if (twoSecsOfPos.size > 2 / 5.0 * Constants.tickRate) twoSecsOfPos = twoSecsOfPos.tail
+    }
   }
 
-  def resetSpeed() = speed = 0
+  //alun perin nollas nopeuden kokonaan, mutta näin parempi. metodia kutsutaan jos pelaajalla kaikki neljä rengasta ruoholla
+  def resetSpeed() = speed = speed * 0.3
 
+  //metodilla saa Pos oliolla pisteen radan kuvasta
   def gamePosToTrack(pos: Pos) = {
     (pos.getX * game.track.pixelsPerMeter, pos.getY * game.track.pixelsPerMeter)
   }
 
+  //teleporttaa pelaajan sekunnin taaksepäin, i on renkaiden määrä ruoholla. Testasin muita lukemia mutta totesin että 4 on paras, jonka takia toteutettu näin
   def tpIfGrass(i: Int) = {
     if (i == 4) {
-      val a = if (twoSecsOfPos.size > 100) twoSecsOfPos(100) else twoSecsOfPos.head
+      val a = if (twoSecsOfPos.size > 100 / 5) twoSecsOfPos(100 / 5) else twoSecsOfPos.head
       pos.changeTo(a._1,a._2,a._3)
       resetSpeed()
-      this match {
-        case (aiCar: AICar) => {
-          aiCar.routeCalculated = false
-          aiCar.nextCheckpointIndex = max(0, aiCar.nextCheckpointIndex - 1)
-          aiCar.miniCheckpointIndex = 0
-        }
-      }
     }
   }
 
-  //Samalla tapahtuu sektorien ja ruohon tarkastus, palauttaa monta rengasta nurmella, hoitaa sektorien päivityksen
+  //Samalla tapahtuu sektorien ja ruohon tarkastus, palauttaa monta rengasta nurmella, hoitaa sektorien päivityksen.
   def checkForGrassAndSectors(positions: Buffer[Pos]): Int = {
     var count = 0
     val f = positions.map(a => gamePosToTrack(a))
@@ -72,20 +72,20 @@ abstract class Car(val game: Game, var pos: Pos, val livery: Int) {
             val print = game.track.sectorColors.indexOf(color) match {
               case 0 => if (sectortimes.size > 1) {
                 val b = sectortimes.takeRight(4)
-                val lastLapVal = (b(3) - b(0)) / 100.0
+                val lastLapVal = (b(3) - b(0)) / Constants.tickRate.toDouble
                 lastLap = Some(lastLapVal)
                 if (bestLap.forall(a => a > lastLapVal)) bestLap = Some(lastLapVal)
 
                 val a = sectortimes.takeRight(2)
-                Some((a(1) - a(0)) / 100.0)
+                Some((a(1) - a(0)) / Constants.tickRate.toDouble)
               } else None
               case 1 => {
                 val a = sectortimes.takeRight(2)
-                Some((a(1) - a(0)) / 100.0)
+                Some((a(1) - a(0)) / Constants.tickRate.toDouble)
               }
               case 2 => {
                 val a = sectortimes.takeRight(2)
-                Some((a(1) - a(0)) / 100.0)
+                Some((a(1) - a(0)) / Constants.tickRate.toDouble)
               }
             }
             lastSector = print
@@ -96,6 +96,7 @@ abstract class Car(val game: Game, var pos: Pos, val livery: Int) {
     count
   }
 
+  //Palauttaa kokoelman, jossa kaikki auton renkaiden paikat pelin Pos olioina
   def wheelPlaces(car: Car): Buffer[Pos] = {
     val ret = Buffer[Pos]()
     val wheelOffsetX = (51 - 28) / (145.0 / 5)
@@ -113,33 +114,64 @@ abstract class Car(val game: Game, var pos: Pos, val livery: Int) {
     ret
   }
 
+  //Laskee "downforcen" eli kuinka paljon aerodynamiikka painaa autoa maahan
   def downforce = pow(speed,2) * Constants.downforce
 
+  //Laskee kaasun aiheuttaman voiman
   def throttle(input: Double): Double = {
     val futureSpeed = sqrt(( Constants.mass / 2 * pow(speed, 2) + (input * Constants.motor)) / ( Constants.mass / 2 ))
     val accerlation = (futureSpeed - speed)
     accerlation * Constants.mass
   }
 
-  def slipstremMultiplier: Double = {
+  //Laskee, onko autolla slipstreamiä
+  def slipstremMultiplier() = {
     if (game.cars.size >= 2) {
       val collection = game.cars.filterNot(_ == this).flatMap(_.twoSecsOfPos.map(a => new Pos(a._1,a._2).difference(pos)))
-      if (collection.nonEmpty && collection.min < 2) Constants.slipstream else 1
-    } else 1
+      slipstreamBoolean = collection.nonEmpty && collection.exists(_ < 2)
+    }
   }
 
-  def drag = pow(speed,1.7) * Constants.drag * slipstremMultiplier
+  //Laskee ilmanvastuksen, jossa on slipstream mukaanluettuna
+  def drag = {
+    val slipstreamMul = if (slipstreamBoolean) Constants.slipstream else 1
+    if (brakeInput == 0) pow(speed,1.7) * Constants.drag * slipstreamMul else 0
+  }
 
+  //Jarrujen aiheuttama voima
   def brake(input: Double): Double = {
     Constants.brake * input
   }
 
+  //Estää autoa menemästä toisen läpi vähentämällä siitä nopeutta
+  def checkForCollisions(): Unit = {
+    val others = game.cars.filterNot(_ == this)
+    if (others.nonEmpty) {
+      val closestDistanceAndCar = others.map(a => (a.pos.difference(pos), a)).minBy(_._1)
+      if (closestDistanceAndCar._1 < 1) {
+        closestDistanceAndCar._2 match {
+          case (ai: AICar) => {
+            this match {
+              case (thisAI: AICar) => if (!this.pos.isBehind(ai.pos)) speed = ai.speed - 10
+              case (thisPl: PlayerCar) => speed = ai.speed - 10
+            }
+          }
+          case _ =>
+        }
+      }
+    }
+  }
+
+  //Yhteenlasketut voimat
   def totalForces(brakePedal: Double, gasPedal: Double): Double = ( throttle(gasPedal) - drag - brake(brakePedal) )
 
+  //Maksimi kitka
   def maxTraction = (downforce + Constants.mass * 9.81) * Constants.tractionMultiplier
 
+  //Laskee kääntymissäteen eturenkaiden kulmasta
   def turningCircleFunction(steeringAngle: Double): Double = if (abs(steeringAngle) < 0.00001) 0 else Constants.wheelBase/tan(toRadians(steeringAngle))
 
+  //Laskee kääntymissäteen maksimikitka mukaanluettuna
   def realTurn(steeringAngle: Double) = {
     val turningCircle = turningCircleFunction(steeringAngle)
     val sign = if (turningCircle < 0) -1 else 1
@@ -159,8 +191,10 @@ abstract class Car(val game: Game, var pos: Pos, val livery: Int) {
 
   def drawAIRoute: Option[Buffer[Node]]
 
+  //Käytetty voima käännöksessä newtoneina
   def usedTractionInTurning(steeringAngle: Double) = if (realTurn(steeringAngle) != 0) pow(speed,2) / abs(realTurn(steeringAngle)) * Constants.mass else 0
 
+  //Lisätty nopeus, kun ideaalinen ABS ja luistonesto
   def addedSpeed(steeringAngle: Double, brakePedal: Double, gasPedal: Double) = {
     if (maxTraction - usedTractionInTurning(steeringAngle) >= 0) {
       min(totalForces(brakePedal, gasPedal), maxTraction - usedTractionInTurning(steeringAngle)) / Constants.mass / Constants.tickRate
@@ -183,6 +217,7 @@ abstract class Car(val game: Game, var pos: Pos, val livery: Int) {
     speed = max(0, speed + realSpeedAdd)//totalForces(brakePedal, gasPedal) / Constants.Constants.mass / Constants.Constants.tickRate)
   }
 
+  //AI:n kuvat
   val img = livery match {
     case 1 => new Image("/pics/Ferrari.png")
     case 2 => new Image("/pics/Mercedes.png")
@@ -193,6 +228,7 @@ abstract class Car(val game: Game, var pos: Pos, val livery: Int) {
 
   def updateInputs(): Unit
 
+  //Piirtää auton scalafx:lle
   def draw = {
     if (game.followedCar == this) {
       new ImageView(img) {
@@ -220,6 +256,7 @@ class PlayerCar(game: Game,pos: Pos) extends Car(game,pos,1) {
 
   def drawAIRoute = None
 
+  //MouseX:stä tehdään renkaiden kulma
   def mouseXtoSteeringInput: Double = {
     val x = Controls.InputManager.mouseX
     val sign = if (x - Constants.width / 2 < 0) -1 else 1
@@ -238,6 +275,8 @@ class PlayerCar(game: Game,pos: Pos) extends Car(game,pos,1) {
 
   def update() = {
     updateInputs()
+    if (game.time % 100 == 0) slipstremMultiplier()
+    if (game.time % 10 == 5) checkForCollisions()
     drive(steeringInput, brakeInput, throttleInput)
     savePos(pos)
     tpIfGrass(checkForGrassAndSectors(wheelPlaces(this)))

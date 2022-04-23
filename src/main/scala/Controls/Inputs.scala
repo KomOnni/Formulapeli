@@ -7,12 +7,11 @@ import scala.collection.mutable.Set
 
 object InputManager {
 
-  // Sets do not allow duplicates, so they are useful here
+  //Itsestään selvyys
   val keysPressed = Set[KeyCode]()
   var keyPressNow = Set[KeyCode]()
   var mouseX: Double = 0
 
-  // Handle all
   def handleInput(scene: Scene) = {
     scene.onKeyPressed = (event) => {
       keysPressed += event.getCode

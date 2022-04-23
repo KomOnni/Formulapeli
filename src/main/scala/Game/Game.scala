@@ -3,64 +3,49 @@ package Game
 import scala.collection.mutable.Buffer
 import Constants.Constants
 
-abstract class Game(val track: Track, val amountOfAI: Int, val playerStart: Int) {
+abstract class Game(val track: Track) {
 
   //rata ja aloituspaikat
   var startPositionsAndTaken:Vector[Pos] = track.raceStart
 
+  //kello
   var time: Long = 0
+  var pause = false
 
   val ticker = new Ticker(() => {
     time += 1
     cars.foreach(_.update())
   })
-  var pause = false
   ticker.start()
 
+  val cars = Buffer[Car]()
 
   //Seurattu auto ja sen aiheuuttama zoomaus
   var followedCarIndex = 0
-  val cars = Buffer[Car]()
-
   def followedCar: Car = cars(followedCarIndex)
   def followedScale = Constants.zoomScale - followedCar.speed / (262/3.6) * (Constants.zoomScale - 1)
-
-  //Autot
-
 }
-/*
-  //metodit
-  def addPlayer = ???
-  def addAI = ???
 
-  def start = ???
-
-  def stopGame() = ???
-  def pause() = ???
-  def unpause() = ???
-  def restart() = ???
-  */
-
-
-class TimeTrial(track: Track) extends Game(track, 0, 1) {
+//Timetrial
+class TimeTrial(track: Track) extends Game(track) {
   startPositionsAndTaken = Vector(track.timeTrialStart)
   cars += new PlayerCar(this, startPositionsAndTaken.head)
 }
 
-//class Race(track: Game.Track, amountOfAI: Int, playerStart: Int, val amountOfLaps: Int) extends Game.Game(track, amountOfAI, playerStart) {}
-
-class AITest(track: Track) extends Game(track, 1, -1) {
+//AITimetrial
+class AITest(track: Track) extends Game(track) {
   val AICar = new AICar(this, startPositionsAndTaken.head,3)
   cars += AICar
 }
 
-class AIRaceTest(track: Track) extends Game(track, 1, -1) {
-  cars += new AICar(this, startPositionsAndTaken(2),1)
+//AI:n välinen kisa
+class AIRaceTest(track: Track) extends Game(track) {
+  cars += new AICar(this, startPositionsAndTaken(2),2)
   cars += new AICar(this, startPositionsAndTaken(3),3)
 }
 
-class Race(track: Track) extends Game(track, 1, -1) {
+//Kisa
+class Race(track: Track) extends Game(track) {
   cars += new PlayerCar(this, startPositionsAndTaken(3))
   cars += new AICar(this, startPositionsAndTaken(2), 3)
-
 }

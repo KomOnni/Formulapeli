@@ -9,15 +9,16 @@ import scala.math._
 
 class AICar(game: Game, pos: Pos, livery: Int) extends Car(game,pos,livery) {
 
+  //Checkpointteja
   var nextCheckpointIndex: Int = 0
-
   var miniCheckpoints: Buffer[(Pos, Int)] = Buffer()
-  var brakePointOn = false
   var miniCheckpointIndex: Int = 0
 
+  //Seuraavien käännöksen arvoja
   var nextTurningRadius: Double = 0
   var nextTurnMaxSpeed: Double = 0
 
+  //AI:n booleaneja
   var failsafeBrake = false
   var alt = false
   var routeCalculated = false
@@ -44,6 +45,7 @@ class AICar(game: Game, pos: Pos, livery: Int) extends Car(game,pos,livery) {
     }
   }
 
+  //Laskee kääntymissäteen, kun kääntymis ja päättymispiste on tiedossa
   def turningCircle(one: Pos, two: Pos): Double = {
     val aone: (Double, Double) = (-1 / tan(toRadians(-one.getR)), -one.getY - (-1) / tan(toRadians(-one.getR)) * one.getX)
     val atwo: (Double, Double) = (-1 / tan(toRadians(-two.getR)), -two.getY - (-1) / tan(toRadians(-two.getR)) * two.getX)
@@ -76,29 +78,29 @@ class AICar(game: Game, pos: Pos, livery: Int) extends Car(game,pos,livery) {
     new Pos(intersectionPoint.getX + cos(toRadians(targetPos.getR)) * d, intersectionPoint.getY + sin(toRadians(targetPos.getR)) * d, targetPos.getR)
   }
 
+  //Laskee jarrutuspisteen checkpoint tyyypille 1 käyttäen fysiikan kaavoja v = v_0 + at ja x = x_0 + v_0*t + 1/2 * a * t^2
   def brakingPointForLate(turningPoint: Pos, turningRadius: Double): Pos = {
     val absturningRadius = abs(turningRadius)
     val absInside = abs((9.81 * Constants.mass * absturningRadius * Constants.tractionMultiplier) / (Constants.downforce * absturningRadius * Constants.tractionMultiplier - Constants.mass) )
     val neededSpeed = sqrt(absInside)
     nextTurnMaxSpeed = neededSpeed
-    //println("max speed for turn: " + neededSpeed)
     val deaccerlation = Constants.brake / Constants.mass
     val time = if (neededSpeed < speed) (speed - neededSpeed) / deaccerlation else 0
-    //println(time)
-    //println(1.0 / 2 * deaccerlation * sin(toRadians(pos.getR - 180)) * pow(time,2))
     new Pos(
-      turningPoint.getX + speed * cos(toRadians(pos.getR - 180)) * time - 1.0 / 2 * deaccerlation * cos(toRadians(pos.getR - 180)) * pow(time,2),
-      turningPoint.getY + speed * sin(toRadians(pos.getR - 180)) * time - 1.0 / 2 * deaccerlation * sin(toRadians(pos.getR - 180)) * pow(time,2),
+      turningPoint.getX + (speed + 1) * cos(toRadians(pos.getR - 180)) * time - 1.0 / 2 * deaccerlation * cos(toRadians(pos.getR - 180)) * pow(time,2),
+      turningPoint.getY + (speed + 1) * sin(toRadians(pos.getR - 180)) * time - 1.0 / 2 * deaccerlation * sin(toRadians(pos.getR - 180)) * pow(time,2),
       turningPoint.getR
     )
   }
 
+  //Laskee jarrutuspistettä uudestaan kokoajan, koska nopeuden kasvaessa jarrutuspiste pitenee
   def recalculateBrakePoint() = {
     if (game.track.routeAndAlt(nextCheckpointIndex)._2 == 1 && miniCheckpointIndex == 0) {
       miniCheckpoints(0) = (brakingPointForLate(miniCheckpoints(1)._1, nextTurningRadius), 1)
     }
   }
 
+  //Laskee pelaajan laittamasta checkpointista tarkemmat ohjeet AI:lle
   def calculateMiniCheckpoints() = {
     if (!routeCalculated) {
       val checkpoint = game.track.routeAndAlt(nextCheckpointIndex)
@@ -121,8 +123,8 @@ class AICar(game: Game, pos: Pos, livery: Int) extends Car(game,pos,livery) {
           nextTurningRadius = turningRadius
 
           miniCheckpoints = Buffer()
-          miniCheckpoints += ((brakePoint, 1))
-          miniCheckpoints += ((turningPoint, 3))
+          if (miniCheckpointIndex == 0) miniCheckpoints += ((brakePoint, 1)) else miniCheckpoints += ((pos, 3))
+          if (miniCheckpointIndex <= 1) miniCheckpoints += ((turningPoint, 3)) else miniCheckpoints += ((pos, 3))
           miniCheckpoints += ((nextCheckpoint, 2))
         }
         case 2 => {
@@ -133,15 +135,14 @@ class AICar(game: Game, pos: Pos, livery: Int) extends Car(game,pos,livery) {
           val absturningRadius = abs(turningRadius)
           val absInside = abs((9.81 * Constants.mass * absturningRadius * Constants.tractionMultiplier) / (Constants.downforce * absturningRadius * Constants.tractionMultiplier - Constants.mass) )
           val maxSpeedForTurn = sqrt(absInside)
-          if (maxSpeedForTurn < speed - 10) {
+          if (maxSpeedForTurn < speed * 0.9) {
             failsafeBrake = true
-//            println("FAILSAFE")
           }
 
           nextTurningRadius = turningRadius
 
           miniCheckpoints = Buffer()
-          miniCheckpoints += ((stopTurningPoint, 2))
+          if (miniCheckpointIndex == 0) miniCheckpoints += ((stopTurningPoint, 2)) else miniCheckpoints += ((pos, 3))
           miniCheckpoints += ((nextCheckpoint, 1))
         }
         case 3 => {
@@ -153,12 +154,14 @@ class AICar(game: Game, pos: Pos, livery: Int) extends Car(game,pos,livery) {
     }
   }
 
+  //Tarkistaa muiden sijaintia, jotta antaa tilaa tarvittaessa
   def checkForOthers() = {
     def newPosOnSide(d: Double) = new Pos(pos.getX + cos(toRadians(pos.getR + 90)) * d, pos.getY + sin(toRadians(pos.getR + 90)) * d)
     def newPosHeading(d: Double) = new Pos(pos.getX + cos(toRadians(pos.getR)) * d, pos.getY + sin(toRadians(pos.getR)) * d)
     val otherPlayers = game.cars.filterNot(_ == this)
     if (otherPlayers.nonEmpty) {
-      val least = (Vector(-3,-2,-1,1,2,3).map(a => newPosOnSide(a)) ++ Vector(-3,5).map(a => newPosHeading(a))).map(a => otherPlayers.map(_.pos.difference(a)).min).zipWithIndex.minBy(_._1)
+      val least = Vector(-5,-3,-1,1,3,5).map(a => newPosOnSide(a)).map(a => otherPlayers.map(_.pos.difference(a)).min).zipWithIndex.minBy(_._1)
+      val leastHeading = Vector(-4,4).map(a => newPosHeading(a)).map(a => otherPlayers.map(_.pos.difference(a)).min).zipWithIndex.minBy(_._1)
       if (least._1 < 3.5 && miniCheckpoints.nonEmpty) {
         val altSide = game.track.routeAndAlt(nextCheckpointIndex)._3
         if (least._2 <= 2 && altSide) {
@@ -181,32 +184,43 @@ class AICar(game: Game, pos: Pos, livery: Int) extends Car(game,pos,livery) {
             if (altvalue) routeCalculated = false
           }
         }
-        else if (least._2 == 6) {
+      }
+      if (leastHeading._1 < 3.5 && miniCheckpoints.nonEmpty) {
+         if (leastHeading._2 == 0) {
           val altvalue = alt
           alt = false
-          if (altvalue && miniCheckpoints(miniCheckpointIndex)._2 == 1) routeCalculated = false
-        }
-        else if (least._2 == 7) {
-          val altvalue = alt
-          alt = true
-          if (!altvalue && miniCheckpoints(miniCheckpointIndex)._2 == 1) routeCalculated = false
+          if (altvalue) routeCalculated = false
+        } else if (leastHeading._2 == 1) {
+          val closestCar = game.cars.filterNot(this == _).minBy(_.pos.difference(pos))
+          val speedDifference = speed - closestCar.speed
+          val closestCarNoAlt = closestCar match {
+            case (ai: AICar) => !alt
+            case _ => true
+          }
+          if ((speedDifference > 0.5 || least._1 < 0.5) && closestCarNoAlt) {
+            val altvalue = alt
+            alt = true
+            if (!altvalue && miniCheckpoints(miniCheckpointIndex)._2 != 2) routeCalculated = false
+          }
         }
       }
     }
   }
 
+  //Laskee AI:n inputit
   def calculateInputs: (Double, Double, Double) = {
     val inputs: (Double, Double, Double) = if (failsafeBrake) (0,1,0) else miniCheckpoints(miniCheckpointIndex)._2 match {
       case 1 => {
         val steeringAngle = 0.3
         val nextMiniPos = miniCheckpoints(miniCheckpointIndex)._1
-        val angle = abs(pos.angleBetween(nextMiniPos))
+        val angle = abs(pos.realAngleBetween(nextMiniPos) - 90 + 360 * 10000) % 360
         val steeringInput = if (angle > 270 && angle < 359.93) steeringAngle else if (angle < 90 && angle > 0.07) -steeringAngle else 0
         (steeringInput,0,1)
       }
       case 2 => {
-        val steeringAngle = toDegrees(atan(Constants.wheelBase / nextTurningRadius))
-        if (steeringAngle > Constants.maxSteeringAngle) println("WARNING: AI STEERING ANGLE")
+        val sign = if (nextTurningRadius < 0) -1 else 1
+        val absSteeringAngle = toDegrees(atan(Constants.wheelBase / abs(nextTurningRadius)))
+        val steeringAngle = min(absSteeringAngle, Constants.maxSteeringAngle) * sign
         (steeringAngle,0,1)
       }
       case 3 => if (speed > nextTurnMaxSpeed) (0,1,0) else (0,0,1)
@@ -221,6 +235,7 @@ class AICar(game: Game, pos: Pos, livery: Int) extends Car(game,pos,livery) {
     throttleInput = inputs._3
   }
 
+  //Painamalla D:tä saa näkyviin AI:n minicheckpointit
   def drawAIRoute = {
     Some(miniCheckpoints.filter(a => miniCheckpoints.indexOf(a) >= miniCheckpointIndex).map(a => new Rectangle{
       height = 10
@@ -237,8 +252,10 @@ class AICar(game: Game, pos: Pos, livery: Int) extends Car(game,pos,livery) {
   def update() = {
     checkCheckpoint()
     checkForOthers()
+    if (game.time % 10 == 3) checkForCollisions()
+    if (game.time % 100 == 1) slipstremMultiplier()
     calculateMiniCheckpoints()
-    recalculateBrakePoint()
+    if (game.time % 10 == 8) recalculateBrakePoint()
     updateInputs()
     drive(steeringInput, brakeInput, throttleInput)
     savePos(pos)
