@@ -1,7 +1,7 @@
 package GUI
 
 import scalafx.application.JFXApp
-import scalafx.scene.{Node, Scene, input}
+import scalafx.scene.{Node, Scene}
 import Constants.Constants
 import Controls.InputManager
 import Game._
@@ -11,9 +11,7 @@ import scalafx.scene.input.KeyCode
 import scalafx.scene.paint.Color
 import scalafx.scene.paint.Color.{DimGray, White}
 import scalafx.scene.shape.Rectangle
-
 import scala.collection.mutable.Buffer
-import scala.math.Ordering.Implicits.seqOrdering
 import scala.math._
 import scala.util.Sorting
 
