@@ -152,8 +152,8 @@ abstract class Car(val game: Game, var pos: Pos, val livery: Int) {
         closestDistanceAndCar._2 match {
           case (ai: AICar) => {
             this match {
-              case (thisAI: AICar) => if (!this.pos.isBehind(ai.pos)) speed = ai.speed - 10
-              case (thisPl: PlayerCar) => speed = ai.speed - 10
+              case (thisAI: AICar) => if (!this.pos.isBehind(ai.pos)) speed = max(ai.speed - 10, 0)
+              case (thisPl: PlayerCar) => speed = max(ai.speed - 10, 0)
             }
           }
           case _ =>

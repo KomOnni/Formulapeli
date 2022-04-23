@@ -6,14 +6,16 @@ import Constants.Constants
 import Controls.InputManager
 import Game._
 import scalafx.scene.control.Label
+import scalafx.scene.image.{Image, ImageView}
 import scalafx.scene.input.KeyCode
 import scalafx.scene.paint.Color
 import scalafx.scene.paint.Color.{DimGray, White}
 import scalafx.scene.shape.Rectangle
 
-
 import scala.collection.mutable.Buffer
+import scala.math.Ordering.Implicits.seqOrdering
 import scala.math._
+import scala.util.Sorting
 
 object GUI extends JFXApp {
 
@@ -131,6 +133,47 @@ object GUI extends JFXApp {
         scaleY = 2
       }
 
+      //Kisan positio
+      val l5 = new Label(s"Pos: ${
+        var a = game.cars.toArray
+         if (game.cars.map(_.sectortimes.size).max < 3*3+1) {
+           Sorting.quickSort(a)(Ordering[(Int, Long)].on(a => (a.sectortimes.size, a.sectortimes.sum)))
+         } else {
+           a = a.filter(_.sectortimes.size >= 3*3+1)
+           Sorting.quickSort(a)(Ordering[(Long)].on(a => (a.sectortimes.take(3*3+1).sum)))
+         }
+        a.indexOf(game.followedCar) + 1
+      }") {
+        val pos = infoLabelPos(5)
+        translateX = pos._1
+        translateY = pos._2
+        textFill = Color.White
+        scaleX = 3
+        scaleY = 3
+      }
+
+      val l6 = new Label(s"Lap ${(game.followedCar.sectortimes.size + 2) / 3}/3") {
+        val pos = infoLabelPos(6)
+        translateX = pos._1
+        translateY = pos._2
+        textFill = Color.White
+        scaleX = 3
+        scaleY = 3
+      }
+
+      val flagImage = new Image("/pics/flag.png")
+      val flag = new ImageView(flagImage) {
+        x = Constants.width / 2.0 - flagImage.width.value / 2
+        y = 20
+        scaleY = 0.3
+        scaleX = 0.3
+      }
+
+
+      val labels: Array[Node] = if (game.isInstanceOf[AIRaceTest] || game.isInstanceOf[Race]) {
+        if ((game.followedCar.sectortimes.size + 2) / 3 >= 4) Array(l1,l2,l3,l4,l5,l6,flag) else Array(l1,l2,l3,l4,l5,l6)
+      } else Array(l1,l2,l3,l4)
+
       //Seuraavat kaksi näyttävät steeringanglen pelissä
       val steeringWhite = new Rectangle {
         x = Constants.width / 2 - 300
@@ -183,7 +226,7 @@ object GUI extends JFXApp {
       map.scaleX = game.followedScale
       map.scaleY = game.followedScale
 
-      val content = Array(map) ++ AInext.toArray ++ cars.toArray ++ Array(steeringWhite, steeringRed, info, l1, l2, l3, l4)
+      val content = Array(map) ++ AInext.toArray ++ cars.toArray ++ Array(steeringWhite, steeringRed, info) ++ labels
       root.content = content
     } else root.content = mainMenu
   }

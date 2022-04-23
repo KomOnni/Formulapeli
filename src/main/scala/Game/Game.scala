@@ -34,18 +34,18 @@ class TimeTrial(track: Track) extends Game(track) {
 
 //AITimetrial
 class AITest(track: Track) extends Game(track) {
-  val AICar = new AICar(this, startPositionsAndTaken.head,3)
+  val AICar = new AICar(this, startPositionsAndTaken.head,0)
   cars += AICar
 }
 
 //AI:n välinen kisa
 class AIRaceTest(track: Track) extends Game(track) {
-  cars += new AICar(this, startPositionsAndTaken(2),2)
-  cars += new AICar(this, startPositionsAndTaken(3),3)
+  cars += new AICar(this, startPositionsAndTaken(0),2)
+  cars += new AICar(this, startPositionsAndTaken(1),3)
 }
 
 //Kisa
 class Race(track: Track) extends Game(track) {
-  cars += new PlayerCar(this, startPositionsAndTaken(3))
-  cars += new AICar(this, startPositionsAndTaken(2), 3)
+  cars += new PlayerCar(this, startPositionsAndTaken(1))
+  cars += new AICar(this, startPositionsAndTaken(0), 3)
 }
