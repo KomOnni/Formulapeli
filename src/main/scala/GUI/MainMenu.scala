@@ -49,7 +49,7 @@ class MainMenu extends VBox {
   def newRace = new Race(Game.Blackwood)
   def newTimeTrial = new TimeTrial(Game.Blackwood)
   def newAIRace = new AIRaceTest(Game.Blackwood)
-  def newAITimetrial = new AIRaceTest(Game.Blackwood)
+  def newAITimetrial = new AITest(Game.Blackwood)
 
   val race = new Button {
     text = "Race"

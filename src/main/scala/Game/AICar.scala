@@ -135,7 +135,7 @@ class AICar(game: Game, pos: Pos, livery: Int) extends Car(game,pos,livery) {
           val absturningRadius = abs(turningRadius)
           val absInside = abs((9.81 * Constants.mass * absturningRadius * Constants.tractionMultiplier) / (Constants.downforce * absturningRadius * Constants.tractionMultiplier - Constants.mass) )
           val maxSpeedForTurn = sqrt(absInside)
-          if (maxSpeedForTurn < speed * 0.9) {
+          if (maxSpeedForTurn < speed * 0.9 && miniCheckpoints(miniCheckpointIndex)._2 != 2) {
             failsafeBrake = true
           }
 
@@ -160,11 +160,10 @@ class AICar(game: Game, pos: Pos, livery: Int) extends Car(game,pos,livery) {
     def newPosHeading(d: Double) = new Pos(pos.getX + cos(toRadians(pos.getR)) * d, pos.getY + sin(toRadians(pos.getR)) * d)
     val otherPlayers = game.cars.filterNot(_ == this)
     if (otherPlayers.nonEmpty) {
-      val least = Vector(-5,-3,-1,1,3,5).map(a => newPosOnSide(a)).map(a => otherPlayers.map(_.pos.difference(a)).min).zipWithIndex.minBy(_._1)
-      val leastHeading = Vector(-4,4).map(a => newPosHeading(a)).map(a => otherPlayers.map(_.pos.difference(a)).min).zipWithIndex.minBy(_._1)
+      val least = (Vector(-5,-3,-1,1,3,5).map(a => newPosOnSide(a)) ++ Vector(4).map(a => newPosHeading(a))).map(a => otherPlayers.map(_.pos.difference(a)).min).zipWithIndex.minBy(_._1)
       if (least._1 < 3.5 && miniCheckpoints.nonEmpty) {
         val altSide = game.track.routeAndAlt(nextCheckpointIndex)._3
-        if (least._2 <= 2 && altSide) {
+        if (least._2 <= 2) {
         val altvalue = alt
           if (altSide) {
             alt = true
@@ -183,21 +182,14 @@ class AICar(game: Game, pos: Pos, livery: Int) extends Car(game,pos,livery) {
             alt = false
             if (altvalue) routeCalculated = false
           }
-        }
-      }
-      if (leastHeading._1 < 3.5 && miniCheckpoints.nonEmpty) {
-         if (leastHeading._2 == 0) {
-          val altvalue = alt
-          alt = false
-          if (altvalue) routeCalculated = false
-        } else if (leastHeading._2 == 1) {
+        } else if (least._2 == 6) {
           val closestCar = game.cars.filterNot(this == _).minBy(_.pos.difference(pos))
           val speedDifference = speed - closestCar.speed
           val closestCarNoAlt = closestCar match {
             case (ai: AICar) => !alt
             case _ => true
           }
-          if ((speedDifference > 0.5 || least._1 < 0.5) && closestCarNoAlt) {
+          if ((speedDifference > 0.5 || least._1 < 2) && closestCarNoAlt) {
             val altvalue = alt
             alt = true
             if (!altvalue && miniCheckpoints(miniCheckpointIndex)._2 != 2) routeCalculated = false
@@ -255,7 +247,7 @@ class AICar(game: Game, pos: Pos, livery: Int) extends Car(game,pos,livery) {
     if (game.time % 10 == 3) checkForCollisions()
     if (game.time % 100 == 1) slipstremMultiplier()
     calculateMiniCheckpoints()
-    if (game.time % 10 == 8) recalculateBrakePoint()
+    recalculateBrakePoint()
     updateInputs()
     drive(steeringInput, brakeInput, throttleInput)
     savePos(pos)

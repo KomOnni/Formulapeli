@@ -17,7 +17,7 @@ object Constants {
 
   // Autolle
   val wheelBase: Double = 3.5
-  val slipstream: Double = 0.88
+  val slipstream: Double = 0.87676
   val downforce: Double = 2.5
   val motor: Double = 400000 //W
   val drag: Double = 3.5
