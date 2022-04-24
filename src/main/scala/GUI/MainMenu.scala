@@ -26,15 +26,15 @@ class MainMenu extends VBox {
   this.alignment = Pos.TopCenter
 
   this.background = new Background(
-      Array(
-          new BackgroundImage(
-              new Image("pics/backgroundPic.png"),
-              BackgroundRepeat.NoRepeat,
-              BackgroundRepeat.NoRepeat,
-              BackgroundPosition.Center,
-              new BackgroundSize(1920, 1080, true, true, true, true)
-          )
-      )
+    Array(
+      new BackgroundImage(
+          new Image("pics/backgroundPic.png"),
+          BackgroundRepeat.NoRepeat,
+          BackgroundRepeat.NoRepeat,
+          BackgroundPosition.Center,
+          new BackgroundSize(1920, 1080, true, true, true, true)
+        )
+    )
   )
 
   val header = new Label("           Autopeli           ")

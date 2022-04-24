@@ -131,14 +131,15 @@ object GUI extends JFXApp {
         scaleY = 2
       }
 
+      val amountOfSectors = game.track.amountOfSectors
       //Kisan positio
       val l5 = new Label(s"Pos: ${
         var a = game.cars.toArray
-         if (game.cars.map(_.sectortimes.size).max < 3*3+1) {
+         if (game.cars.map(_.sectortimes.size).max < 3*amountOfSectors+1) {
            Sorting.quickSort(a)(Ordering[(Int, Long)].on(a => (a.sectortimes.size, a.sectortimes.sum)))
          } else {
-           a = a.filter(_.sectortimes.size >= 3*3+1)
-           Sorting.quickSort(a)(Ordering[(Long)].on(a => (a.sectortimes.take(3*3+1).sum)))
+           a = a.filter(_.sectortimes.size >= 3*amountOfSectors+1)
+           Sorting.quickSort(a)(Ordering[(Long)].on(a => (a.sectortimes.take(3*amountOfSectors+1).sum)))
          }
         a.indexOf(game.followedCar) + 1
       }") {
@@ -150,7 +151,7 @@ object GUI extends JFXApp {
         scaleY = 3
       }
 
-      val l6 = new Label(s"Lap ${(game.followedCar.sectortimes.size + 2) / 3}/3") {
+      val l6 = new Label(s"Lap ${(game.followedCar.sectortimes.size + amountOfSectors - 1) / amountOfSectors }/3") {
         val pos = infoLabelPos(6)
         translateX = pos._1
         translateY = pos._2
@@ -169,7 +170,7 @@ object GUI extends JFXApp {
 
 
       val labels: Array[Node] = if (game.isInstanceOf[AIRaceTest] || game.isInstanceOf[Race]) {
-        if ((game.followedCar.sectortimes.size + 2) / 3 >= 4) Array(l1,l2,l3,l4,l5,l6,flag) else Array(l1,l2,l3,l4,l5,l6)
+        if ((game.followedCar.sectortimes.size + amountOfSectors - 1) / amountOfSectors >= 4) Array(l1,l2,l3,l4,l5,l6,flag) else Array(l1,l2,l3,l4,l5,l6)
       } else Array(l1,l2,l3,l4)
 
       //Seuraavat kaksi näyttävät steeringanglen pelissä
@@ -195,7 +196,7 @@ object GUI extends JFXApp {
 
       //Seuraavan funktion avulla voi seurata autoa sen perspektiivistä.
       def followCar(car: Car) = {
-          map.rotate = -90 - car.pos.getR
+        map.rotate = -90 - car.pos.getR
 
         val imgCenter = (game.track.img.width.value / 2.0, game.track.img.height.value / 2.0)
         val ogPoint = (car.pos.getX * game.track.pixelsPerMeter, car.pos.getY * game.track.pixelsPerMeter)
