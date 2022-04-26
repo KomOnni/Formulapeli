@@ -45,31 +45,29 @@ object GUI extends JFXApp {
   //Päivitä metodi
   def update() = {
     if (game != null) {
-    //Voi saada paikat aloituspaikkoja ja AI:n reittiä varten
-      def p = game.followedCar.pos
-      if (Controls.InputManager.keyPressNow.contains(KeyCode.Q)) {
-        println(s"(${p.getX}, ${p.getY}, ${p.getR})")
-      }
-
-      //Vaihtaa kameraa seuraavaan pelaajaan
-      if (Controls.InputManager.keyPressNow.contains(KeyCode.C)) {
-        game.followedCarIndex += 1
-        if (game.followedCarIndex == game.cars.size) game.followedCarIndex = 0
-      }
-
-      //Laittaa pelin pauselle
-      if (Controls.InputManager.keyPressNow.contains(KeyCode.P)) {
-        if (game.pause) {
-          game.ticker.start()
-        } else {
-          game.ticker.stop()
+      Controls.InputManager.keyPressNow.foreach {
+        case KeyCode.Q => {
+          //Printtaa position, auttaa ratojen tekemisessä
+          val p = game.followedCar.pos
+          println(s"(${p.getX}, ${p.getY}, ${p.getR})")
         }
-        game.pause = !game.pause
-      }
-
-      //Näyttää AI:n checkpointit
-      if (Controls.InputManager.keyPressNow.contains(KeyCode.D)) {
-        checkpointsVisible = !checkpointsVisible
+        case KeyCode.C => {
+          //Vaihtaa seurattavaa autoa
+          game.followedCarIndex += 1
+          if (game.followedCarIndex == game.cars.size) game.followedCarIndex = 0
+        }
+        case KeyCode.P => {
+          //Pause nappi
+          if (game.pause) {
+            game.ticker.start()
+          } else {
+            game.ticker.stop()
+          }
+          game.pause = !game.pause
+        }
+        //Näyttää AI:n checkpointit
+        case KeyCode.D => checkpointsVisible = !checkpointsVisible
+        case _ =>
       }
 
       //Tyhjentää tämän

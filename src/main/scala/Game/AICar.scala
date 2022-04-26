@@ -160,7 +160,9 @@ class AICar(game: Game, pos: Pos, livery: Int) extends Car(game,pos,livery) {
     def newPosHeading(d: Double) = new Pos(pos.getX + cos(toRadians(pos.getR)) * d, pos.getY + sin(toRadians(pos.getR)) * d)
     val otherPlayers = game.cars.filterNot(_ == this)
     if (otherPlayers.nonEmpty) {
+      //Katsoo sivulta viiden kolmen ja yhden metrin päästä kummaltakin puolilta ja edestä neljän metrin päästä ja ottaa toista autoa lähimpänä olevan position.
       val least = (Vector(-5,-3,-1,1,3,5).map(a => newPosOnSide(a)) ++ Vector(4).map(a => newPosHeading(a))).map(a => otherPlayers.map(_.pos.difference(a)).min).zipWithIndex.minBy(_._1)
+      //Jos lähin on alle 3.5m päässä, AI varmistaa, ettei se kiilaa sitä radalta ulos tai jos edessä, AI lähtee sivulle ohittamaan
       if (least._1 < 3.5 && miniCheckpoints.nonEmpty) {
         val altSide = game.track.routeAndAlt(nextCheckpointIndex)._3
         if (least._2 <= 2) {
@@ -244,7 +246,7 @@ class AICar(game: Game, pos: Pos, livery: Int) extends Car(game,pos,livery) {
   def update() = {
     checkCheckpoint()
     checkForOthers()
-    if (game.time % 10 == 3) checkForCollisions()
+    if (game.time % 20 == 3) checkForCollisions()
     if (game.time % 100 == 1) slipstremMultiplier()
     calculateMiniCheckpoints()
     recalculateBrakePoint()
