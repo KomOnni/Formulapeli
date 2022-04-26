@@ -136,10 +136,10 @@ object GUI extends JFXApp {
       val l5 = new Label(s"Pos: ${
         var a = game.cars.toArray
          if (game.cars.map(_.sectortimes.size).max < 3*amountOfSectors+1) {
-           Sorting.quickSort(a)(Ordering[(Int, Long)].on(a => (-a.sectortimes.size, a.sectortimes.sum)))
+           Sorting.quickSort(a)(Ordering[(Int, Long)].on(a => (-a.sectortimes.size, a.sectortimes.lastOption.getOrElse(0))))
          } else {
            a = a.filter(_.sectortimes.size >= 3*amountOfSectors+1)
-           Sorting.quickSort(a)(Ordering[(Long)].on(a => (a.sectortimes.take(3*amountOfSectors+1).sum)))
+           Sorting.quickSort(a)(Ordering[(Long)].on(a => (a.sectortimes.take(3*amountOfSectors+1).last)))
          }
         a.indexOf(game.followedCar) + 1
       }") {
