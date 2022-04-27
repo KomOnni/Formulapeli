@@ -65,8 +65,10 @@ abstract class Car(val game: Game, var pos: Pos, val livery: Int) {
         case None =>
         case Some(pr) => {
           val color = pr.getColor(a._1.round.toInt, a._2.round.toInt)
+          //Vihreessä ei ole sinistä ja näin voi tunnistaa vihreän pikselin sävystä riippumatta
           if (color.green - 0.2 > color.blue) {
             count += 1
+          //Katsoo onko renkaan alla oleva seuraavan sektoriviivan värinen, jos on niin hoitaa siitä aiheutuvat päivitykset infoon ja pelin logiikkaan.
           } else if (color == game.track.sectorColors(sectortimes.size % game.track.amountOfSectors)) {
             sectortimes += game.time
             val print = game.track.sectorColors.indexOf(color) match {

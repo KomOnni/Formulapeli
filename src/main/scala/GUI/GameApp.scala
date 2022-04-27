@@ -33,6 +33,13 @@ object GUI extends JFXApp {
     game = newGame
   }
 
+  var toMenu = false
+  def toMainMenu() = {
+    game.ticker.stop()
+    game = null
+    toMenu = false
+  }
+
   //Takaväri
   root.setFill(Color.rgb(89,111,38))
 
@@ -44,7 +51,10 @@ object GUI extends JFXApp {
 
   //Päivitä metodi
   def update() = {
+    //Katsoo, onko mainmenussa game variablen kautta.
     if (game != null) {
+
+      //Kontrolleja
       Controls.InputManager.keyPressNow.foreach {
         case KeyCode.Q => {
           //Printtaa position, auttaa ratojen tekemisessä
@@ -67,6 +77,7 @@ object GUI extends JFXApp {
         }
         //Näyttää AI:n checkpointit
         case KeyCode.D => checkpointsVisible = !checkpointsVisible
+        case KeyCode.Escape => toMenu = true
         case _ =>
       }
 
@@ -225,6 +236,8 @@ object GUI extends JFXApp {
 
       val content = Array(map) ++ AInext.toArray ++ cars.toArray ++ Array(steeringWhite, steeringRed, info) ++ labels
       root.content = content
+
+      if (toMenu) toMainMenu()
     } else root.content = mainMenu
   }
 

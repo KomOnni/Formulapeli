@@ -29,23 +29,27 @@ abstract class Game(val track: Track) {
 //Timetrial
 class TimeTrial(track: Track) extends Game(track) {
   startPositionsAndTaken = Vector(track.timeTrialStart)
-  cars += new PlayerCar(this, startPositionsAndTaken.head)
+  def addP(pos: Pos) = new PlayerCar(this, pos)
+  cars += addP(startPositionsAndTaken(0).makeNew)
 }
 
 //AITimetrial
 class AITest(track: Track) extends Game(track) {
-  val AICar = new AICar(this, startPositionsAndTaken.head,0)
-  cars += AICar
+  def add(pos: Pos, int: Int) = new AICar(this, pos, int)
+  cars += add(startPositionsAndTaken(0).makeNew, 3)
 }
 
 //AI:n välinen kisa
 class AIRaceTest(track: Track) extends Game(track) {
-  cars += new AICar(this, startPositionsAndTaken(0),2)
-  cars += new AICar(this, startPositionsAndTaken(1),3)
+  def add(pos: Pos, int: Int) = new AICar(this, pos, int)
+  cars += add(startPositionsAndTaken(0).makeNew, 2)
+  cars += add(startPositionsAndTaken(1).makeNew, 3)
 }
 
 //Kisa
 class Race(track: Track) extends Game(track) {
-  cars += new PlayerCar(this, startPositionsAndTaken(1))
-  cars += new AICar(this, startPositionsAndTaken(0), 3)
+  def add(pos: Pos, int: Int) = new AICar(this, pos, int)
+  def addP(pos: Pos) = new PlayerCar(this, pos)
+  cars += addP(startPositionsAndTaken(1).makeNew)
+  cars += add(startPositionsAndTaken(0).makeNew, 3)
 }

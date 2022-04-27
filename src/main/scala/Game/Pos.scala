@@ -49,6 +49,8 @@ class Pos(setX: Double, setY: Double, setRotation: Double = 0) {
     rotation = nr
   }
 
+  def makeNew: Pos = new Pos(getX,getY,getR)
+
   // Paikan muuttaminen steerin anglen avulla, vasemmalle annetaan neg.
   def add(steeringRadius: Double, speed: Double) = {
     if (steeringRadius == 0) {
