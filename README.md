@@ -14,7 +14,11 @@ Peli on kouluprojekti, jossa pelataan formulalla joko aikaa tai toista autoa vas
 
 ## Video pelistä
 
+Klikkaamalla alla olevaa kuvaa pääsee youtube videoon
+
 [![Watch the video](https://img.youtube.com/vi/NkljyhS-h8Y/maxresdefault.jpg)](https://www.youtube.com/watch?v=NkljyhS-h8Y)
+
+Linkki: https://www.youtube.com/watch?v=NkljyhS-h8Y
 
 ## Kuvia pelistä
 ![Kuva 1](https://github.com/KomOnni/Formulapeli/blob/main/pics/Kuva%201.PNG?raw=true)
